@@ -9,8 +9,10 @@
 #ifndef CONFIG_INCLUDED_
 #define CONFIG_INCLUDED_
 
+#include <iomanip>
 #include <iostream>
 #include <list>
+#include <map>
 #include <stack>
 #include <string>
 #include <vector>

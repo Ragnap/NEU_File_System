@@ -25,6 +25,8 @@ typedef class UserManager {
 private:
     /// 已存在的用户信息
     vector<User> users;
+    /// 当前系统用户
+    User current_user;
 
 public:
     /**
@@ -39,8 +41,10 @@ public:
             if(user.username == username) {
                 if(user.password == password)
                     return 1;
-                else
+                else {
+                    current_user = user;
                     return 0;
+                }
             }
         }
         return -1;
@@ -63,5 +67,13 @@ public:
         new_user.password = password;
         users.push_back(new_user);
         return true;
+    }
+    /**
+     * @brief 获取当前用户名
+     *
+     * @return string 当前用户名
+     */
+    string GetCurrentUser() {
+        return current_user.username;
     }
 } UserManager;
