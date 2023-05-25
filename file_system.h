@@ -2,7 +2,7 @@
  * @ 青空だけが見たいのは我儘ですか
  * @Author       : RagnaLP
  * @Date         : 2023-05-23 15:00:16
- * @LastEditTime : 2023-05-23 20:11:24
+ * @LastEditTime : 2023-05-25 08:54:12
  * @Description  : 文件系统类
  */
 
@@ -97,6 +97,7 @@ public:
      *
      */
     void Debug() {
+        user_manager.Debug();
         menu_manager.Debug();
     }
 } FileSystem;

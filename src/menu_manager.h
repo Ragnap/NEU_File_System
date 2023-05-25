@@ -1,4 +1,10 @@
-
+/**
+ * @ 青空だけが見たいのは我儘ですか
+ * @Author       : RagnaLP
+ * @Date         : 2023-05-23 15:05:59
+ * @LastEditTime : 2023-05-25 09:08:52
+ * @Description  : 目录处理相关类
+ */
 
 #include "config.h"
 
@@ -296,6 +302,7 @@ public:
      */
     void Debug() {
         cout << "基本文件目录 共" << base_file_count << "个: " << endl;
+        cout << " ------------------------------------------" << endl;
         for(int i = 0; i < base_file_list.items.size(); i++) {
             cout << " | ";
             cout << setw(4) << left << base_file_list.items[i].id << " | ";
@@ -304,6 +311,7 @@ public:
             cout << setw(15) << left << base_file_list.items[i].name;
             cout << " | " << endl;
         }
+        cout << " ------------------------------------------" << endl;
         cout << endl;
         cout << "文件夹目录 共" << folder_count << "个：" << endl;
         cout << " --------------------------" << endl;

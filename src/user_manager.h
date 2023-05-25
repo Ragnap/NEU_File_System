@@ -2,7 +2,7 @@
  * @ 青空だけが見たいのは我儘ですか
  * @Author       : RagnaLP
  * @Date         : 2023-05-23 15:05:59
- * @LastEditTime : 2023-05-23 15:58:19
+ * @LastEditTime : 2023-05-25 09:08:52
  * @Description  : 用户处理相关类
  */
 
@@ -75,5 +75,21 @@ public:
      */
     string GetCurrentUser() {
         return current_user.username;
+    }
+    /**
+     * @brief 输出调试信息
+     * 包含所有的用户
+     */
+    void Debug() {
+        cout << "用户目录 共" << users.size() << "个: " << endl;
+        cout << " ----------------------------------" << endl;
+        for(int i = 0; i < users.size(); i++) {
+            cout << " | ";
+            cout << setw(11) << left << users[i].username << " | ";
+            cout << setw(15) << left << users[i].password;
+            cout << " | " << endl;
+        }
+        cout << " ----------------------------------" << endl;
+        cout << endl;
     }
 } UserManager;
