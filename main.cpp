@@ -2,7 +2,7 @@
  * @ 青空だけが見たいのは我儘ですか
  * @Author       : RagnaLP
  * @Date         : 2023-05-23 15:17:14
- * @LastEditTime : 2023-05-23 20:26:13
+ * @LastEditTime : 2023-05-25 15:51:44
  * @Description  :
  */
 
@@ -40,6 +40,13 @@ int main() {
                 cout << "\t存在同名文件夹" << endl;
             else
                 cout << "\t创建成功" << endl;
+        }
+        else if(ope == "save") {
+            file_system.Save();
+        }
+
+        else if(ope == "load") {
+            file_system.Load();
         }
         else if(ope == "debug")
             file_system.Debug();

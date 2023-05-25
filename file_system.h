@@ -2,7 +2,7 @@
  * @ 青空だけが見たいのは我儘ですか
  * @Author       : RagnaLP
  * @Date         : 2023-05-23 15:00:16
- * @LastEditTime : 2023-05-25 08:54:12
+ * @LastEditTime : 2023-05-25 15:24:16
  * @Description  : 文件系统类
  */
 
@@ -16,12 +16,20 @@
  */
 typedef class FileSystem {
 private:
-public:
     /// 用户管理模块
     UserManager user_manager;
     /// 目录管理模块
     MenuManager menu_manager;
 
+    /**
+     * @brief 清空系统
+     *
+     */
+    void Clear() {
+        menu_manager.Clear();
+    }
+
+public:
     /**
      * @brief 初始化整个文件系统
      *
@@ -92,6 +100,36 @@ public:
     void ShowFolder() {
         menu_manager.ShowFolder();
     }
+
+    /**
+     * @brief 保存到文件
+     * 目录系统
+     * 用户系统
+     */
+    bool Save() {
+        FILE* f = fopen(FILE_PATH.c_str(), "w");
+        if(f == NULL)
+            return false;
+        menu_manager.Save(f);
+
+        fclose(f);
+        return true;
+    }
+    /**
+     * @brief 从文件读取
+     *
+     */
+    bool Load() {
+        Clear();
+        FILE* f = fopen(FILE_PATH.c_str(), "r");
+        if(f == NULL)
+            return false;
+        menu_manager.Load(f);
+
+        fclose(f);
+
+                return true;
+    }
     /**
      * @brief 输出所有的调试信息
      *
@@ -100,4 +138,5 @@ public:
         user_manager.Debug();
         menu_manager.Debug();
     }
+
 } FileSystem;

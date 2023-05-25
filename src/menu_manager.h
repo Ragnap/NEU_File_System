@@ -2,7 +2,7 @@
  * @ 青空だけが見たいのは我儘ですか
  * @Author       : RagnaLP
  * @Date         : 2023-05-23 15:05:59
- * @LastEditTime : 2023-05-25 09:08:52
+ * @LastEditTime : 2023-05-25 15:53:12
  * @Description  : 目录处理相关类
  */
 
@@ -144,15 +144,11 @@ private:
     int folder_count;
 
 public:
-    string GetNowFolderName() {
-        return now_folder_name;
-    }
     /**
-     * @brief 初始化目录
+     * @brief 清空数据
      *
      */
-    void Initialize() {
-        // 初始化相关数据
+    void Clear() {
         base_file_count = 0;
         base_file_list.items.clear();
 
@@ -162,6 +158,14 @@ public:
         now_folder = 0;
         now_folder_base_id = 0;
         now_folder_name = "root";
+    }
+    /**
+     * @brief 初始化目录
+     *
+     */
+    void Initialize() {
+        // 初始化相关数据
+        Clear();
         // 创建创建初始根目录
         Folder root;
         // 基本文件目录中新增一项
@@ -170,6 +174,9 @@ public:
         root.Add(".", 0);
         // 文件夹目录新增一项
         folders[0] = root;
+        // 更新记数
+        base_file_count++;
+        folder_count++;
     }
 
     /**
@@ -185,9 +192,8 @@ public:
             return false;
         // 创建新文件夹目录
         Folder new_folder;
-        folder_count++;
+
         // 基本文件目录中新增一项
-        base_file_count++;
         base_file_list.Add(base_file_count, folder_count, true, folder_name);
 
         // 为新文件夹关联增加相对路径目录项
@@ -198,6 +204,11 @@ public:
         folders[folder_count] = new_folder;
         // 当前文件夹新增一项
         folders[now_folder].Add(folder_name, base_file_count);
+
+        // 更新记数
+        base_file_count++;
+        folder_count++;
+
         return true;
     }
 
@@ -213,10 +224,12 @@ public:
         if(folders[now_folder].Find(file_name) != -1)
             return false;
         // 基本文件目录中新增一项
-        base_file_count++;
         base_file_list.Add(base_file_count, inode_id, false, file_name);
         // 当前文件夹新增一项
         folders[now_folder].Add(file_name, base_file_count);
+
+        // 更新记数
+        base_file_count++;
         return true;
     }
     /**
@@ -281,6 +294,14 @@ public:
         }
     }
     /**
+     * @brief 获取当前所在文件夹名称
+     *
+     * @return string 文件夹名称
+     */
+    string GetNowFolderName() {
+        return now_folder_name;
+    }
+    /**
      * @brief 显示当前文件夹下所有文件
      *
      */
@@ -295,6 +316,57 @@ public:
             cout << endl;
         }
         cout << endl;
+    }
+    /**
+     * @brief 保存目录数据
+     * 基本表项数量
+     * 基本表项
+     * 文件夹目录数量
+     * 当前文件夹编号
+     * 当前文件夹目录项数
+     * 当前文件夹目录项
+     */
+    void Save(FILE* file) {
+        // 基本表
+        fprintf(file, "%d\n", base_file_count);
+        for(auto item: base_file_list.items) {
+            fprintf(file, "%d %d %d %s\n", item.first, item.second.index, item.second.is_folder, item.second.name.c_str());
+        }
+        // 文件夹表
+        fprintf(file, "%d\n", folders.size());
+        for(auto folder: folders) {
+            fprintf(file, "%d %d\n", folder.first, folder.second.items.size());
+            for(auto item: folder.second.items) {
+                fprintf(file, "%s %d\n", item.name.c_str(), item.index);
+            }
+        }
+    }
+    /**
+     * @brief 从文件恢复目录数据
+     *
+     */
+    void Load(FILE* file) {
+        int id, index, is_folder, siz;
+        char name[50];
+        // 基本表
+        fscanf(file, "%d", &base_file_count);
+        for(int i = 0; i < base_file_count; i++) {
+            fscanf(file, "%d %d %d %s", &id, &index, &is_folder, name);
+            base_file_list.Add(id, index, is_folder, string(name));
+        }
+        // 文件夹表
+        fscanf(file, "%d", &folder_count);
+        for(int i = 0; i < folder_count; i++) {
+            Folder new_folder;
+            fscanf(file, "%d %d", &id, &siz);
+            cout << siz << endl;
+            for(int j = 0; j < siz; j++) {
+                fscanf(file, "%s %d", name, &index);
+                cout << name << " " << index << endl;
+                new_folder.Add(string(name), index);
+            }
+            folders[id] = new_folder;
+        }
     }
     /**
      * @brief 输出调试信息
