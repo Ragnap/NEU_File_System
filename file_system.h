@@ -2,10 +2,11 @@
  * @ 青空だけが見たいのは我儘ですか
  * @Author       : RagnaLP
  * @Date         : 2023-05-23 15:00:16
- * @LastEditTime : 2023-05-26 09:00:45
+ * @LastEditTime : 2023-05-26 17:35:09
  * @Description  : 文件系统类
  */
 
+#include "src/block_manager.h"
 #include "src/config.h"
 #include "src/menu_manager.h"
 #include "src/user_manager.h"
@@ -20,12 +21,14 @@ private:
     UserManager user_manager;
     /// 目录管理模块
     MenuManager menu_manager;
-
+    /// 块管理模块
+    BlockMananger block_mananger;
     /**
      * @brief 清空系统
      *
      */
     void Clear() {
+        block_mananger.Clear();
         menu_manager.Clear();
         user_manager.Clear();
     }
@@ -36,6 +39,7 @@ public:
      *
      */
     void Initalize(string root_password) {
+        block_mananger.Initialize();
         menu_manager.Initialize();
         user_manager.Initialize(root_password);
     }
@@ -53,12 +57,6 @@ public:
      */
     bool SignUp(string username, string password) {
         return user_manager.SignUp(username, password);
-        // if(result) {
-        //     cout << "注册成功！" << endl;
-        // }
-        // else {
-        //     cout << "用户名已存在！" << endl;
-        // }
     }
 
     /**
@@ -91,14 +89,21 @@ public:
     /**
      * @brief 获取当前路径
      *
-     * @return string
      */
     string GetCurrentPath() {
         return menu_manager.GetNowFolderName();
     }
+    /**
+     * @brief 获取当前用户名
+     *
+     */
     string GetCurrentUser() {
         return user_manager.GetCurrentUser();
     }
+    /**
+     * @brief 显示当前文件夹内容
+     *
+     */
     void ShowFolder() {
         menu_manager.ShowFolder();
     }
@@ -112,6 +117,7 @@ public:
         FILE* f = fopen(FILE_PATH.c_str(), "w");
         if(f == NULL)
             return false;
+        block_mananger.Save(f);
         menu_manager.Save(f);
         user_manager.Save(f);
         fclose(f);
@@ -126,6 +132,7 @@ public:
         FILE* f = fopen(FILE_PATH.c_str(), "r");
         if(f == NULL)
             return false;
+        block_mananger.Load(f);
         menu_manager.Load(f);
         user_manager.Load(f);
         fclose(f);
@@ -136,6 +143,7 @@ public:
      *
      */
     void Debug() {
+        block_mananger.Debug();
         user_manager.Debug();
         menu_manager.Debug();
     }
