@@ -2,7 +2,7 @@
  * @ 青空だけが見たいのは我儘ですか
  * @Author       : RagnaLP
  * @Date         : 2023-05-23 15:05:59
- * @LastEditTime : 2023-05-25 15:53:12
+ * @LastEditTime : 2023-05-25 16:41:12
  * @Description  : 目录处理相关类
  */
 
@@ -359,10 +359,8 @@ public:
         for(int i = 0; i < folder_count; i++) {
             Folder new_folder;
             fscanf(file, "%d %d", &id, &siz);
-            cout << siz << endl;
             for(int j = 0; j < siz; j++) {
                 fscanf(file, "%s %d", name, &index);
-                cout << name << " " << index << endl;
                 new_folder.Add(string(name), index);
             }
             folders[id] = new_folder;

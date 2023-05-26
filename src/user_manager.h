@@ -2,7 +2,7 @@
  * @ 青空だけが見たいのは我儘ですか
  * @Author       : RagnaLP
  * @Date         : 2023-05-23 15:05:59
- * @LastEditTime : 2023-05-25 09:08:52
+ * @LastEditTime : 2023-05-25 16:57:40
  * @Description  : 用户处理相关类
  */
 
@@ -30,6 +30,22 @@ private:
 
 public:
     /**
+     * @brief 清空用户系统
+     *
+     */
+    void Clear() {
+        users.clear();
+    }
+    /**
+     * @brief 初始化用户系统，需要提供管理员密码
+     *
+     */
+    void Initialize(string root_password) {
+        users.clear();
+        SignUp("root", root_password);
+    }
+
+    /**
      * @brief 登录
      *
      * @param username 用户名
@@ -39,10 +55,11 @@ public:
     int Login(string username, string password) {
         for(auto user: users) {
             if(user.username == username) {
-                if(user.password == password)
-                    return 1;
-                else {
+                if(user.password == password) {
                     current_user = user;
+                    return 1;
+                }
+                else {
                     return 0;
                 }
             }
@@ -75,6 +92,33 @@ public:
      */
     string GetCurrentUser() {
         return current_user.username;
+    }
+    /**
+     * @brief 保存所有用户信息
+     *
+     */
+    void Save(FILE* file) {
+        fprintf(file, "%d\n", users.size());
+        for(auto user: users) {
+            fprintf(file, "%s %s\n", user.username.c_str(), user.password.c_str());
+        }
+    }
+    /**
+     * @brief 读取所有用户信息
+     *
+     */
+    void Load(FILE* file) {
+        char username[50];
+        char password[50];
+        int siz;
+        fscanf(file, "%d", &siz);
+        for(int i = 0; i < siz; i++) {
+            fscanf(file, "%s %s\n", username, password);
+            User new_user;
+            new_user.username = username;
+            new_user.password = password;
+            users.push_back(new_user);
+        }
     }
     /**
      * @brief 输出调试信息

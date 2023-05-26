@@ -9,6 +9,7 @@
 #ifndef CONFIG_INCLUDED_
 #define CONFIG_INCLUDED_
 
+#include <fstream>
 #include <iomanip>
 #include <iostream>
 #include <list>
