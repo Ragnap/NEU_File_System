@@ -2,7 +2,7 @@
  * @ 青空だけが見たいのは我儘ですか
  * @Author       : RagnaLP
  * @Date         : 2023-05-23 15:05:59
- * @LastEditTime : 2023-05-25 16:41:12
+ * @LastEditTime : 2023-05-26 20:39:24
  * @Description  : 目录处理相关类
  */
 
@@ -268,6 +268,27 @@ public:
         }
     }
 
+    /**
+     * @brief 在当前文件夹下根据文件路径查找文件(夹),支持两种方式:绝对路径(/)与相对路径(./ ../ name)
+     *
+     * @param path 路径
+     * @return int 目标在基本文件目录表的下标，文件不存在时返回-1
+     */
+    int Find(string path) {
+        return Find(path, now_folder_base_id);
+    }
+    /**
+     * @brief 获取文件的第一个数据块位置
+     *
+     * @param file_path 文件名
+     * @return int 第一个数据块位置，文件不存在时返回-1
+     */
+    int GetAddress(string file_path) {
+        int index = Find(file_path);
+        if(index == -1)
+            return -1;
+        return base_file_list.GetIndex(index);
+    }
     /**
      * @brief 打开文件夹,支持两种方式:绝对路径(/)与相对路径(./ ../ name)
      *

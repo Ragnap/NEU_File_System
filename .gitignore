@@ -1,2 +1,5 @@
 .vscode
 .clang-format
+test.cpp
+test.exe
+test.txt
