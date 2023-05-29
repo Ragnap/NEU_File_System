@@ -2,7 +2,7 @@
  * @ 青空だけが見たいのは我儘ですか
  * @Author       : RagnaLP
  * @Date         : 2023-05-23 15:17:14
- * @LastEditTime : 2023-05-26 20:46:37
+ * @LastEditTime : 2023-05-29 16:01:19
  * @Description  :
  */
 
@@ -69,12 +69,15 @@ int main() {
             else if(ope == "cd") {
                 cin >> arg[0];
                 if(!file_system.ChangeFolder(arg[0]))
-                    cout << "\t文件路径出错" << endl;
+                    cout << "\t路径错误" << endl;
             }
             else if(ope == "mkdir") {
                 cin >> arg[0];
-                if(!file_system.CreateFolder(arg[0]))
+                int result = file_system.CreateFolder(arg[0]);
+                if(result == -1)
                     cout << "\t存在同名文件夹" << endl;
+                else if(result == -2)
+                    cout << "\t路径错误" << endl;
                 else
                     cout << "\t创建成功" << endl;
             }
@@ -85,6 +88,8 @@ int main() {
                     cout << "\t存在同名文件夹" << endl;
                 else if(result == -1)
                     cout << "\t磁盘块空间不足" << endl;
+                else if(result == -2)
+                    cout << "\t路径错误" << endl;
                 else
                     cout << "\t创建成功" << endl;
             }
@@ -93,6 +98,8 @@ int main() {
                 pair<int, string> result = file_system.ReadFile(arg[0]);
                 if(result.first == -1)
                     cout << "\t文件不存在" << endl;
+                else if(result.first == -2)
+                    cout << "\t路径错误" << endl;
                 else {
                     cout << "\t读取成功，共读取到 " << result.second.size() << " 个字节:" << endl << endl;
                     cout << result.second << endl << endl;
@@ -103,7 +110,9 @@ int main() {
                 int result = file_system.WriteFile(arg[0], arg[1]);
                 if(result == -1)
                     cout << "\t文件不存在" << endl;
-                else if(result == -1)
+                else if(result == -2)
+                    cout << "\t路径错误" << endl;
+                else if(result == 0)
                     cout << "\t磁盘空间不足" << endl;
                 else
                     cout << "\t写入成功" << endl;

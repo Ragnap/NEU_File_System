@@ -2,7 +2,7 @@
  * @ 青空だけが見たいのは我儘ですか
  * @Author       : RagnaLP
  * @Date         : 2023-05-23 15:05:59
- * @LastEditTime : 2023-05-26 20:39:24
+ * @LastEditTime : 2023-05-29 15:59:53
  * @Description  : 目录处理相关类
  */
 
@@ -182,14 +182,36 @@ public:
     /**
      * @brief 在当前路径下创建一个新的文件夹
      *
-     * @param folder_name 新文件夹名称
-     * @return true 成功创建
-     * @return false 创建失败，存在同名文件
+     * @param folder_path 新文件夹路径
+     * @return int 正常创建时返回0，已存在同名文件时返回-1，路径错误时返回-2
      */
-    bool CreateFolder(string folder_name) {
-        // 检查是否重名
-        if(folders[now_folder].Find(folder_name) != -1)
-            return false;
+    int CreateFolder(string folder_path) {
+        // 检查路径
+        int check = Find(folder_path);
+        // 路径错误
+        if(check == -2)
+            return -2;
+        // 已存在同名文件
+        if(check != -1)
+            return -1;
+
+        string folder_name;
+        int folder_id = now_folder;
+
+        // 确定文件夹位置
+
+        int delimiter_pos = folder_path.find_last_of('/');
+        // 就是个纯文件，不包含路径
+        if(delimiter_pos == -1) {
+            folder_name = folder_path;
+        }
+        else {
+            // 查找对应的文件夹
+            string upper_folder_path = folder_path.substr(0, delimiter_pos);
+            folder_id = Find(upper_folder_path);
+            folder_name = folder_path.substr(delimiter_pos + 1);
+        }
+
         // 创建新文件夹目录
         Folder new_folder;
 
@@ -203,7 +225,7 @@ public:
         // 文件夹目录新增一项
         folders[folder_count] = new_folder;
         // 当前文件夹新增一项
-        folders[now_folder].Add(folder_name, base_file_count);
+        folders[folder_id].Add(folder_name, base_file_count);
 
         // 更新记数
         base_file_count++;
@@ -215,29 +237,51 @@ public:
     /**
      * @brief 在当前路径下创建一个新的文件
      *
-     * @param file_name 新文件名称
-     * @return true 成功创建
-     * @return false 创建失败，存在同名文件
+     * @param file_path 新文件名称与路径
+     * @return int 正常创建时返回0，已存在同名文件时返回-1，路径错误时返回-2
      */
-    bool CreateFile(string file_name, int inode_id) {
-        // 检查是否重名
-        if(folders[now_folder].Find(file_name) != -1)
-            return false;
+    int CreateFile(string file_path, int inode_id) {
+        // 检查路径
+        int check = Find(file_path);
+        // 路径错误
+        if(check == -2)
+            return -2;
+        // 已存在同名文件
+        if(check != -1)
+            return -1;
+
+        string file_name;
+        int folder_id = now_folder;
+
+        // 确定文件夹位置
+
+        int delimiter_pos = file_path.find_last_of('/');
+        // 就是个纯文件，不包含路径
+        if(delimiter_pos == -1) {
+            file_name = file_path;
+        }
+        else {
+            // 查找对应的文件夹
+            string upper_folder_path = file_path.substr(0, delimiter_pos);
+            folder_id = Find(upper_folder_path);
+            file_name = file_path.substr(delimiter_pos + 1);
+        }
+
         // 基本文件目录中新增一项
         base_file_list.Add(base_file_count, inode_id, false, file_name);
-        // 当前文件夹新增一项
-        folders[now_folder].Add(file_name, base_file_count);
+        // 对应的文件夹新增一项
+        folders[folder_id].Add(file_name, base_file_count);
 
         // 更新记数
         base_file_count++;
-        return true;
+        return 0;
     }
     /**
      * @brief 以递归方式根据文件路径查找文件(夹),支持两种方式:绝对路径(/)与相对路径(./ ../ name)
      *
      * @param path 路径
      * @param current_folder_id 当前文件夹的基本文件目录下标
-     * @return int 目标在基本文件目录表的下标，文件不存在时返回-1
+     * @return int 目标在基本文件目录表的下标，文件不存在时返回-1，路径错误时返回-2
      */
     int Find(string path, int current_folder_id) {
         // 将基本文件目录下标转换为文件目录编号
@@ -259,8 +303,16 @@ public:
             string next_path = (delimiter_pos == -1 ? "" : path.substr(delimiter_pos + 1));
             // 在当前文件夹下查找
             int next_id = folders[current_folder_id].Find(next_folder);
-            // 未找到后续路径或者无后续文件夹，终止搜索
-            if(next_id == -1 || next_path.empty())
+            if(next_id == -1) {
+                // 路径错误
+                if(path.find('/') != string::npos)
+                    return -2;
+                // 未找到对应文件
+                else
+                    return -1;
+            }
+            // 无后续文件夹完成查找
+            if(next_path.empty())
                 return next_id;
             // 否则在对应的文件夹下继续寻找
             else
@@ -272,7 +324,7 @@ public:
      * @brief 在当前文件夹下根据文件路径查找文件(夹),支持两种方式:绝对路径(/)与相对路径(./ ../ name)
      *
      * @param path 路径
-     * @return int 目标在基本文件目录表的下标，文件不存在时返回-1
+     * @return int 目标在基本文件目录表的下标，文件不存在时返回-1，路径错误时返回-2
      */
     int Find(string path) {
         return Find(path, now_folder_base_id);
@@ -281,12 +333,12 @@ public:
      * @brief 获取文件的第一个数据块位置
      *
      * @param file_path 文件名
-     * @return int 第一个数据块位置，文件不存在时返回-1
+     * @return int 第一个数据块位置，文件不存在时返回-1，路径错误时返回-2
      */
     int GetAddress(string file_path) {
         int index = Find(file_path);
-        if(index == -1)
-            return -1;
+        if(index < 0)
+            return index;
         return base_file_list.GetIndex(index);
     }
     /**
@@ -294,14 +346,14 @@ public:
      *
      * @param folder_path 文件夹路径
      * @return true 打开成功
-     * @return false 不存在文件夹打开失败
+     * @return false 路径错误打开失败
      */
     bool OpenFolder(string folder_path) {
         if(folder_path.empty())
             return false;
         int folder_id = Find(folder_path, now_folder_base_id);
         // 如果没有对应路径
-        if(folder_id == -1)
+        if(folder_id < 0)
             return false;
         // 如果是同名文件
         if(!base_file_list.GetIsFolder(folder_id))
