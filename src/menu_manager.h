@@ -2,7 +2,7 @@
  * @ 青空だけが見たいのは我儘ですか
  * @Author       : RagnaLP
  * @Date         : 2023-05-23 15:05:59
- * @LastEditTime : 2023-05-29 15:59:53
+ * @LastEditTime : 2023-05-29 20:30:03
  * @Description  : 目录处理相关类
  */
 
@@ -66,6 +66,13 @@ typedef struct BaseFileList {
         new_item.name = name;
         items[id] = new_item;
     }
+    /**
+     * @brief 移除基本文件表下标对应的一个文件
+     *
+     */
+    void Delete(int id) {
+        items.erase(id);
+    }
 } BaseFileList;
 
 /**
@@ -120,6 +127,16 @@ typedef struct Folder {
                 return items[i].index;
         return -1;
     }
+    /**
+     * @brief 根据指向的基本文件表下标删除文件
+     *
+     */
+    void Delete(int index) {
+        for(int i = 0; i < items.size(); i++)
+            if(items[i].index == index) {
+                items.erase(items.begin() + i);
+            }
+    }
 } Folder;
 
 /**
@@ -142,6 +159,139 @@ private:
     int base_file_count;
     /// 当前文件夹目录记数
     int folder_count;
+
+    /**
+     * @brief 以递归方式根据文件路径查找文件(夹),支持两种方式:绝对路径(/)与相对路径(./ ../ name)
+     *
+     * @param path 路径
+     * @param current_folder_id 当前文件夹的基本文件目录下标
+     * @return int 目标在基本文件目录表的下标，文件不存在时返回-1，路径错误时返回-2
+     */
+    int Find(string path, int current_folder_id) {
+        // 将基本文件目录下标转换为文件目录编号
+        current_folder_id = base_file_list.GetIndex(current_folder_id);
+        if(path[0] == '/') {
+            // 绝对路径模式
+            // 单输入"/"时跳转到根目录
+            if(path.length() == 1)
+                return 0;
+            else
+                return Find(path.substr(1), 0);
+        }
+        else {
+            // 相对路径模式
+            int delimiter_pos = path.find('/');
+            // 当前文件夹下需要打开的文件夹
+            string next_folder = (delimiter_pos == -1 ? path : path.substr(0, delimiter_pos));
+            // 后续需要打开的文件夹
+            string next_path = (delimiter_pos == -1 ? "" : path.substr(delimiter_pos + 1));
+            // 在当前文件夹下查找
+            int next_id = folders[current_folder_id].Find(next_folder);
+            if(next_id == -1) {
+                // 路径错误
+                if(path.find('/') != string::npos)
+                    return -2;
+                // 未找到对应文件
+                else
+                    return -1;
+            }
+            // 无后续文件夹完成查找
+            if(next_path.empty())
+                return next_id;
+            // 否则在对应的文件夹下继续寻找
+            else
+                return Find(next_path, next_id);
+        }
+    }
+
+    /**
+     * @brief 以递归方式在路径下查找某个文件
+     *
+     * @param file_name 文件名
+     * @param current_folder_id 当前文件夹的基本文件目录下标
+     * @return pair<int,int> <目标在基本文件目录表的下标,所在文件夹在文件夹目录里的下标>，文件不存在时返回<-1,-1>
+     */
+    pair<int, int> FindFile(string file_name, int current_folder_id) {
+        // 将基本文件目录下标转换为文件目录编号
+        current_folder_id = base_file_list.GetIndex(current_folder_id);
+        for(FolderItem item: folders[current_folder_id].items) {
+            // 跳过相对目录项
+            if(item.name == "." || item.name == "..")
+                continue;
+            // 如果是文件夹则继续遍历
+            if(base_file_list.GetIsFolder(item.index)) {
+                pair<int, int> sub_result = FindFile(file_name, base_file_list.GetIndex(item.index));
+                // 如果已经找到则直接返回
+                if(sub_result.first != -1)
+                    return sub_result;
+            }
+            // 如果是文件则判断是否为目标文件
+            else if(item.name == file_name)
+                return make_pair(item.index, current_folder_id);
+        }
+        return make_pair(-1, -1);
+    }
+
+    /**
+     * @brief 以递归方式获取指定文件或指定路径下的所有文件的index编号
+     *
+     * @param current_folder_id 当前文件夹的基本文件目录下标
+     * @return vector<pair<int,string> > 所有文件的index编号与名称
+     */
+    vector<pair<int, string>> GetFiles(int current_folder_id) {
+        vector<pair<int, string>> result(0);
+        // 将基本文件目录下标转换为文件目录编号
+        current_folder_id = base_file_list.GetIndex(current_folder_id);
+        for(FolderItem item: folders[current_folder_id].items) {
+            // 跳过相对目录项
+            if(item.name == "." || item.name == "..")
+                continue;
+            // 如果是文件夹则继续遍历
+            if(base_file_list.GetIsFolder(item.index)) {
+                vector<pair<int, string>> sub_result = GetFiles(base_file_list.GetIndex(item.index));
+                result.insert(result.end(), sub_result.begin(), sub_result.end());
+            }
+            // 如果是文件则直接附加
+            else {
+                result.push_back(make_pair(base_file_list.GetIndex(item.index), item.name));
+            }
+        }
+        return result;
+    }
+    /**
+     * @brief 递归删除当前文件夹下所有的空文件夹(只包含文件夹的文件夹)，包括当前文件夹，不删除根目录
+     *
+     * @param current_folder_id 当前文件夹的基本文件目录下标
+     */
+    void DeleteEmptyFolder(int current_folder_id) {
+        // 将基本文件目录下标转换为文件目录编号
+        current_folder_id = base_file_list.GetIndex(current_folder_id);
+        int count = 0;
+        vector<FolderItem> origin_folder = folders[current_folder_id].items;
+        for(FolderItem item: origin_folder) {
+            // 跳过相对目录项
+            if(item.name == "." || item.name == "..")
+                continue;
+            // 如果是文件夹则继续遍历检查
+            if(base_file_list.GetIsFolder(item.index))
+                DeleteEmptyFolder(item.index);
+        }
+        // 当前文件夹已空，进行移除
+        if(current_folder_id != 0 && folders[current_folder_id].items.size() == 2) {
+            // 基本文件目录删除一项
+            base_file_list.Delete(folders[current_folder_id].items[1].index);
+            // 父文件夹减少一项
+            int upper_folder_id = folders[current_folder_id].items[0].index;
+            folders[upper_folder_id].Delete(folders[current_folder_id].items[1].index);
+            folders.erase(current_folder_id);
+            // 若删除了当前打开的目录，则需要返回上一级目录
+            if(current_folder_id == now_folder_base_id) {
+                now_folder_base_id = upper_folder_id;
+                now_folder = base_file_list.GetIndex(now_folder_base_id);
+                now_folder_name = base_file_list.GetName(now_folder_base_id);
+            }
+        }
+    }
 
 public:
     /**
@@ -219,7 +369,7 @@ public:
         base_file_list.Add(base_file_count, folder_count, true, folder_name);
 
         // 为新文件夹关联增加相对路径目录项
-        new_folder.Add("..", now_folder_base_id);
+        new_folder.Add("..", folder_id);
         new_folder.Add(".", base_file_count);
 
         // 文件夹目录新增一项
@@ -232,6 +382,35 @@ public:
         folder_count++;
 
         return true;
+    }
+
+    /**
+     * @brief 获取指定文件或指定路径下的所有文件的index编号
+     *
+     * @param file_path 指定路径
+     * @return vector<int> 所有文件的index编号,错误时返回一个元素的vector (错误编号,"")  (-1:文件不存在 -2:路径错误 -3:无文件 -4:单文件)
+     */
+    vector<pair<int, string>> GetFiles(string file_path) {
+        vector<pair<int, string>> result(0);
+        // 检查路径
+        int id = Find(file_path);
+        // 路径错误或不存在
+        if(id < 0) {
+            result.push_back(make_pair(id, ""));
+            return result;
+        }
+        // 如果是文件夹
+        if(base_file_list.GetIsFolder(id)) {
+            result = GetFiles(id);
+            if(result.size() == 0)
+                result.push_back(make_pair(-3, ""));
+        }
+        // 单文件
+        else {
+            result.push_back(make_pair(-4, ""));
+            result.push_back(make_pair(base_file_list.GetIndex(id), base_file_list.GetName(id)));
+        }
+        return result;
     }
 
     /**
@@ -276,52 +455,9 @@ public:
         base_file_count++;
         return 0;
     }
-    /**
-     * @brief 以递归方式根据文件路径查找文件(夹),支持两种方式:绝对路径(/)与相对路径(./ ../ name)
-     *
-     * @param path 路径
-     * @param current_folder_id 当前文件夹的基本文件目录下标
-     * @return int 目标在基本文件目录表的下标，文件不存在时返回-1，路径错误时返回-2
-     */
-    int Find(string path, int current_folder_id) {
-        // 将基本文件目录下标转换为文件目录编号
-        current_folder_id = base_file_list.GetIndex(current_folder_id);
-        if(path[0] == '/') {
-            // 绝对路径模式
-            // 单输入"/"时跳转到根目录
-            if(path.length() == 1)
-                return 0;
-            else
-                return Find(path.substr(1), 0);
-        }
-        else {
-            // 相对路径模式
-            int delimiter_pos = path.find('/');
-            // 当前文件夹下需要打开的文件夹
-            string next_folder = (delimiter_pos == -1 ? path : path.substr(0, delimiter_pos));
-            // 后续需要打开的文件夹
-            string next_path = (delimiter_pos == -1 ? "" : path.substr(delimiter_pos + 1));
-            // 在当前文件夹下查找
-            int next_id = folders[current_folder_id].Find(next_folder);
-            if(next_id == -1) {
-                // 路径错误
-                if(path.find('/') != string::npos)
-                    return -2;
-                // 未找到对应文件
-                else
-                    return -1;
-            }
-            // 无后续文件夹完成查找
-            if(next_path.empty())
-                return next_id;
-            // 否则在对应的文件夹下继续寻找
-            else
-                return Find(next_path, next_id);
-        }
-    }
 
     /**
-     * @brief 在当前文件夹下根据文件路径查找文件(夹),支持两种方式:绝对路径(/)与相对路径(./ ../ name)
+     * @brief 在当前文件夹下根据文件路径查找完整路径的文件(夹),支持两种方式:绝对路径(/)与相对路径(./ ../ name)
      *
      * @param path 路径
      * @return int 目标在基本文件目录表的下标，文件不存在时返回-1，路径错误时返回-2
@@ -329,10 +465,62 @@ public:
     int Find(string path) {
         return Find(path, now_folder_base_id);
     }
+
+    /**
+     * @brief 删除在指定文件夹下的一个子文件
+     *
+     * @param file_name 子文件名
+     * @param path 指定目录
+     * @return int 0:正常删除 -1:文件不存在 -2:路径错误
+     */
+    int DeleteFile(string file_name, string path = "./") {
+        // 定位文件夹
+        int id = Find(path);
+        if(id < 0)
+            return id;
+        pair<int, int> pos;
+        // 该路径就是一个文件夹,在所有的子文件夹中查找
+        if(base_file_list.GetIsFolder(id)) {
+            pos = FindFile(file_name, id);
+        }
+        // 该路径直接就是一个文件，只需要定位所在文件夹
+        else {
+            int folder_id, delimiter_pos = path.find_last_of('/');
+            // 就是个纯文件，不包含路径
+            if(delimiter_pos == -1)
+                folder_id = now_folder_base_id;
+            // 查找路径上的父文件夹
+            else
+                folder_id = Find(path.substr(0, delimiter_pos));
+            pos = FindFile(file_name, folder_id);
+        }
+
+        // 删除基本文件表中的文件
+        base_file_list.Delete(pos.first);
+        // 删除对应文件夹下的文件项
+        folders[pos.second].Delete(pos.first);
+        return 0;
+    }
+
+    /**
+     * @brief 递归删除指定文件夹下所有的空文件夹(只包含文件夹的文件夹)，包括当前文件夹，不删除根目录
+     *
+     * @param path 指定路径
+     * @return int 0:正常删除 -1:文件不存在 -2:路径错误
+     */
+    int DeleteEmptyFolder(string path) {
+        // 定位文件夹
+        int index = Find(path);
+        if(index < 0)
+            return index;
+        // 删除
+        DeleteEmptyFolder(index);
+        return 0;
+    }
     /**
      * @brief 获取文件的第一个数据块位置
      *
-     * @param file_path 文件名
+     * @param file_path 文件路径
      * @return int 第一个数据块位置，文件不存在时返回-1，路径错误时返回-2
      */
     int GetAddress(string file_path) {
@@ -341,6 +529,7 @@ public:
             return index;
         return base_file_list.GetIndex(index);
     }
+
     /**
      * @brief 打开文件夹,支持两种方式:绝对路径(/)与相对路径(./ ../ name)
      *
@@ -366,6 +555,7 @@ public:
             return true;
         }
     }
+
     /**
      * @brief 获取当前所在文件夹名称
      *
@@ -374,6 +564,7 @@ public:
     string GetNowFolderName() {
         return now_folder_name;
     }
+
     /**
      * @brief 显示当前文件夹下所有文件
      *
@@ -390,6 +581,7 @@ public:
         }
         cout << endl;
     }
+
     /**
      * @brief 保存目录数据
      * 基本表项数量
@@ -414,6 +606,7 @@ public:
             }
         }
     }
+
     /**
      * @brief 从文件恢复目录数据
      *
@@ -439,27 +632,28 @@ public:
             folders[id] = new_folder;
         }
     }
+
     /**
      * @brief 输出调试信息
      * 包含基本文件目录和所有的文件夹目录
      */
     void Debug() {
-        cout << "基本文件目录 共" << base_file_count << "个: " << endl;
+        cout << "基本文件目录 共" << base_file_list.items.size() << "个: " << endl;
         cout << " ------------------------------------------" << endl;
-        for(int i = 0; i < base_file_list.items.size(); i++) {
+        for(auto i: base_file_list.items) {
             cout << " | ";
-            cout << setw(4) << left << base_file_list.items[i].id << " | ";
-            cout << setw(4) << left << base_file_list.items[i].index << " | ";
-            cout << setw(6) << left << (base_file_list.items[i].is_folder ? "folder" : "file") << " | ";
-            cout << setw(15) << left << base_file_list.items[i].name;
+            cout << setw(4) << left << i.second.id << " | ";
+            cout << setw(4) << left << i.second.index << " | ";
+            cout << setw(6) << left << (i.second.is_folder ? "folder" : "file") << " | ";
+            cout << setw(15) << left << i.second.name;
             cout << " | " << endl;
         }
         cout << " ------------------------------------------" << endl;
         cout << endl;
-        cout << "文件夹目录 共" << folder_count << "个：" << endl;
+        cout << "文件夹目录 共" << folders.size() << "个：" << endl;
         cout << " --------------------------" << endl;
         for(auto iter: folders) {
-            cout << " | 文件夹" << iter.first << ":               |" << endl;
+            cout << " | 文件夹 " << setw(15) << base_file_list.GetName(folders[iter.first].Find(".")) << " |" << endl;
             for(int j = 0; j < iter.second.items.size(); j++) {
                 cout << " | ";
                 cout << setw(15) << left << iter.second.items[j].name << " | ";

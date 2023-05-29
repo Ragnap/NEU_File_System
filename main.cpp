@@ -2,7 +2,7 @@
  * @ 青空だけが見たいのは我儘ですか
  * @Author       : RagnaLP
  * @Date         : 2023-05-23 15:17:14
- * @LastEditTime : 2023-05-29 16:01:19
+ * @LastEditTime : 2023-05-29 19:55:25
  * @Description  :
  */
 
@@ -116,6 +116,16 @@ int main() {
                     cout << "\t磁盘空间不足" << endl;
                 else
                     cout << "\t写入成功" << endl;
+            }
+            else if(ope == "delete") {
+                cin >> arg[0];
+                int result = file_system.DeleteFiles(arg[0]);
+                if(result == -1)
+                    cout << "\t文件不存在" << endl;
+                else if(result == -2)
+                    cout << "\t路径错误" << endl;
+                else
+                    cout << "\t删除成功" << endl;
             }
             else if(ope == "save") {
                 file_system.Save();

@@ -2,7 +2,7 @@
  * @ 青空だけが見たいのは我儘ですか
  * @Author       : RagnaLP
  * @Date         : 2023-05-26 09:41:57
- * @LastEditTime : 2023-05-26 20:26:57
+ * @LastEditTime : 2023-05-29 17:33:27
  * @Description  : 超级块与磁盘块系统
  */
 #include "config.h"
@@ -124,6 +124,8 @@ public:
                 super_block.pop();
                 // 移入新的空闲列表
                 super_block = block[block_id].list_block;
+                // 原块进行清空
+                block[block_id].clear();
             }
         }
         // 超级块剩余的空闲块能分配
