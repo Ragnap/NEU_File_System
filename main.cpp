@@ -2,7 +2,7 @@
  * @ 青空だけが見たいのは我儘ですか
  * @Author       : RagnaLP
  * @Date         : 2023-05-23 15:17:14
- * @LastEditTime : 2023-05-29 19:55:25
+ * @LastEditTime : 2023-05-30 14:35:34
  * @Description  :
  */
 
@@ -142,6 +142,34 @@ int main() {
             else if(ope == "exit") {
                 file_system.Save();
                 return 0;
+            }
+            else if(ope == "help") {
+                cout << endl << "\t可用指令如下：" << endl << endl;
+                cout << "\t " << setw(30) << left << "ls"
+                     << " - 显示当前文件夹下的内容" << endl;
+                cout << "\t " << setw(30) << left << "cd <path>"
+                     << " - 按照路径进入到某个文件夹下" << endl;
+                cout << "\t " << setw(30) << left << "mkdir <path/name>"
+                     << " - 在指定路径下创建一个文件夹" << endl;
+                cout << "\t " << setw(30) << left << "create <path/name>"
+                     << " - 在指定路径下创建一个文件" << endl;
+                cout << "\t " << setw(30) << left << "read <path/name>"
+                     << " - 读取指定路径下的一个文件" << endl;
+                cout << "\t " << setw(30) << left << "write <path/name> <content>"
+                     << " - 将内容写入到指定路径下的一个文件" << endl;
+                cout << "\t " << setw(30) << left << "delete <path/name>"
+                     << " - 删除路径对应的文件夹的所有内容或路径对应的文件" << endl;
+                cout << "\t " << setw(30) << left << "save"
+                     << " - 保存整个文件系统" << endl;
+                cout << "\t " << setw(30) << left << "load"
+                     << " - 读取整个文件系统" << endl;
+                cout << "\t " << setw(30) << left << "logout"
+                     << " - 登出当前用户" << endl;
+                cout << "\t " << setw(30) << left << "exit"
+                     << " - 退出并保存文件系统" << endl;
+                cout << "\t " << setw(30) << left << "debug"
+                     << " - 输出调试用的文件系统的信息" << endl;
+                cout << endl;
             }
             else
                 cout << "指令错误!" << endl;
