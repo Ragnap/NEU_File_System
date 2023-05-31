@@ -2,7 +2,7 @@
  * @ 青空だけが見たいのは我儘ですか
  * @Author       : RagnaLP
  * @Date         : 2023-05-23 15:00:16
- * @LastEditTime : 2023-05-31 20:25:43
+ * @LastEditTime : 2023-05-31 20:50:20
  * @Description  : 文件系统类
  */
 
@@ -24,7 +24,7 @@ private:
     /// 块管理模块
     BlockMananger block_manager;
     /// 内存管理模块
-    MemeryManager memory_manager;
+    MemoryManager memory_manager;
     /**
      * @brief 清空系统
      *
@@ -75,9 +75,9 @@ public:
         WriteFile("/~inode", memory_manager.Save(), "SYSTEM");
         getchar();
         getchar();
-        // CloseFile("/~menu");
-        // CloseFile("/~inode");
-        // CloseFile("/~user");
+        CloseFile("/~menu");
+        CloseFile("/~inode");
+        CloseFile("/~user");
     }
 
     /**
@@ -146,6 +146,21 @@ public:
         int result = memory_manager.OpenFile(inode, content);
         if(result < 0)
             return result - 2;
+        return 0;
+    }
+    /**
+     * @brief 关闭文件，移出内存
+     *
+     * @param file_path 文件路径
+     * @return int -3:未打开 -2:路径错误 -1:无对应文件 0:成功
+     */
+    int CloseFile(string file_path) {
+        int inode = menu_manager.GetInodeID(file_path);
+        if(inode < 0)
+            return inode;
+        int result = memory_manager.CloseFile(inode);
+        if(result < 0)
+            return -3;
         return 0;
     }
     /**
@@ -245,6 +260,15 @@ public:
     string GetCurrentUser() {
         return user_manager.GetCurrentUser();
     }
+    /**
+     * @brief 返回内存使用情况
+     *
+     * @return pair<int,int> (已使用，总)
+     */
+    pair<int, int> GetCapacity() {
+        return memory_manager.GetCapacity();
+    }
+
     /**
      * @brief 显示当前文件夹内容
      *

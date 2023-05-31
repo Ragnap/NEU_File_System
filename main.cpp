@@ -2,7 +2,7 @@
  * @ 青空だけが見たいのは我儘ですか
  * @Author       : RagnaLP
  * @Date         : 2023-05-23 15:17:14
- * @LastEditTime : 2023-05-31 19:25:54
+ * @LastEditTime : 2023-05-31 20:51:46
  * @Description  :
  */
 
@@ -126,6 +126,48 @@ int main() {
                 else
                     PrintInfo("创建成功");
             }
+            else if(ope == "open") {
+                int input_check = ReadString(1, arg, CheckCharOneByte);
+                if(input_check != 0) {
+                    if(input_check == -1)
+                        PrintError("输入参数不足");
+                    else if(input_check == -2)
+                        PrintError("参数非法");
+                    continue;
+                }
+                int result = file_system.OpenFile(arg[0]);
+                if(result == -1)
+                    cout << "\t文件不存在" << endl;
+                else if(result == -2)
+                    PrintError("路径错误");
+                else if(result == -3)
+                    PrintError("文件已打开");
+                else if(result == -4)
+                    PrintError("内存不足");
+                else if(result == -5)
+                    PrintError("可用inode数量不足");
+                else
+                    PrintInfo("打开成功，当前内存已使用" + to_string(file_system.GetCapacity().first) + "，共 " + to_string(file_system.GetCapacity().second));
+            }
+            else if(ope == "close") {
+                int input_check = ReadString(1, arg, CheckCharOneByte);
+                if(input_check != 0) {
+                    if(input_check == -1)
+                        PrintError("输入参数不足");
+                    else if(input_check == -2)
+                        PrintError("参数非法");
+                    continue;
+                }
+                int result = file_system.CloseFile(arg[0]);
+                if(result == -1)
+                    cout << "\t文件不存在" << endl;
+                else if(result == -2)
+                    PrintError("路径错误");
+                else if(result == -3)
+                    PrintError("文件未打开");
+                else
+                    PrintInfo("关闭成功，当前内存已使用" + to_string(file_system.GetCapacity().first) + "，共 " + to_string(file_system.GetCapacity().second));
+            }
             else if(ope == "read") {
                 int input_check = ReadString(1, arg, CheckCharOneByte);
                 if(input_check != 0) {
@@ -140,6 +182,8 @@ int main() {
                     cout << "\t文件不存在" << endl;
                 else if(result.first == -2)
                     PrintError("路径错误");
+                else if(result.first == -3)
+                    PrintError("文件未打开");
                 else {
                     PrintInfo("读取成功，共读取到" + to_string(result.second.size()) + " 个字节:", 2);
                     PrintLine(result.second, 2);
@@ -161,6 +205,12 @@ int main() {
                     PrintError("路径错误");
                 else if(result == 0)
                     PrintError("磁盘块空间不足");
+                else if(result == -3)
+                    PrintError("文件未打开");
+                else if(result == -4)
+                    PrintError("权限不足");
+                else if(result == -5)
+                    PrintError("内存不足");
                 else
                     PrintInfo("写入成功");
             }
@@ -207,6 +257,10 @@ int main() {
                      << " - 在指定路径下创建一个文件夹" << endl;
                 cout << "\t " << setw(30) << left << "create <path/name>"
                      << " - 在指定路径下创建一个文件" << endl;
+                cout << "\t " << setw(30) << left << "open <path/name>"
+                     << " - 打开指定路径下的一个文件，载入内存" << endl;
+                cout << "\t " << setw(30) << left << "close <path/name>"
+                     << " - 关闭指定路径下的一个文件，移出内存" << endl;
                 cout << "\t " << setw(30) << left << "read <path/name>"
                      << " - 读取指定路径下的一个文件" << endl;
                 cout << "\t " << setw(30) << left << "write <path/name> <content>"

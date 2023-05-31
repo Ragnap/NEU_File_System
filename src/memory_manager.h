@@ -2,7 +2,7 @@
  * @ 青空だけが見たいのは我儘ですか
  * @Author       : RagnaLP
  * @Date         : 2023-05-31 14:41:28
- * @LastEditTime : 2023-05-31 20:09:35
+ * @LastEditTime : 2023-05-31 20:49:34
  * @Description  : 内存管理与Inode系统
  */
 #include "config.h"
@@ -27,7 +27,7 @@ struct MemIndexNode {
 /**
  * @brief inode管理类
  */
-class MemeryManager {
+class MemoryManager {
 private:
     /// 磁盘inode
     map<int, DiscIndexNode> disc_inodes;
@@ -121,6 +121,14 @@ public:
      */
     int GetDiscAddress(int disc_inode_id) {
         return disc_inodes[disc_inode_id].disc_block_address;
+    }
+    /**
+     * @brief 返回内存使用情况
+     *
+     * @return pair<int,int> (已使用，总)
+     */
+    pair<int, int> GetCapacity() {
+        return make_pair((MEM_BLOCK_NUM - free_mem_block.size()) * MEM_BLOCK_SIZE, MEM_BLOCK_NUM * MEM_BLOCK_SIZE);
     }
     /**
      * @brief 清空内存与inode信息
