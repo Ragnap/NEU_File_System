@@ -2,7 +2,7 @@
  * @ 青空だけが見たいのは我儘ですか
  * @Author       : RagnaLP
  * @Date         : 2023-05-31 14:41:28
- * @LastEditTime : 2023-05-31 20:49:34
+ * @LastEditTime : 2023-05-31 21:04:18
  * @Description  : 内存管理与Inode系统
  */
 #include "config.h"
@@ -193,13 +193,13 @@ public:
         DiscIndexNode disc_inode = disc_inodes[disc_inode_id];
         // 检测是否已经打开
         if(IsOpened(disc_inode_id))
-            return -2;
+            return -1;
         // 判断内存是否够大
         if(disc_inode.file_size - disc_inodes[disc_inode_id].file_size > free_mem_block.size() * MEM_BLOCK_SIZE)
-            return -3;
+            return -2;
         // 检测内存inode数量是否足够
         if(free_mem_inode.empty())
-            return -4;
+            return -3;
         // 分配内存inode
         MemIndexNode mem_inode;
         int mem_inode_id = free_mem_inode.top();
@@ -353,7 +353,7 @@ public:
         for(int i = 0; i < siz; i++) {
             DiscIndexNode inode;
             in >> id >> inode.creator >> inode.file_size >> inode.disc_block_address;
-            inode.mem_inode_id = 0;
+            inode.mem_inode_id = -1;
             disc_inodes[id] = inode;
         }
         // 初始化内存有关

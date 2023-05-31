@@ -2,7 +2,7 @@
  * @ 青空だけが見たいのは我儘ですか
  * @Author       : RagnaLP
  * @Date         : 2023-05-23 15:17:14
- * @LastEditTime : 2023-05-31 20:51:46
+ * @LastEditTime : 2023-05-31 21:09:04
  * @Description  :
  */
 
@@ -231,6 +231,21 @@ int main() {
                 else
                     PrintInfo("删除成功");
             }
+            else if(ope == "signup") {
+                int input_check = ReadString(2, arg, CheckCharOneByte);
+                if(input_check != 0) {
+                    if(input_check == -1)
+                        PrintError("输入参数不足");
+                    else if(input_check == -2)
+                        PrintError("参数非法");
+                    continue;
+                }
+                bool result = file_system.SignUp(arg[0], arg[1]);
+                if(result == false)
+                    PrintError("用户已存在");
+                else
+                    PrintInfo("注册成功");
+            }
             else if(ope == "save") {
                 file_system.Save();
             }
@@ -241,6 +256,7 @@ int main() {
                 file_system.Debug();
             else if(ope == "logout") {
                 file_system.Save();
+                file_system.Load();
                 break;
             }
             else if(ope == "exit") {
