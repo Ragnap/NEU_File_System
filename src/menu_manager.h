@@ -2,7 +2,7 @@
  * @ 青空だけが見たいのは我儘ですか
  * @Author       : RagnaLP
  * @Date         : 2023-05-23 15:05:59
- * @LastEditTime : 2023-05-31 13:22:08
+ * @LastEditTime : 2023-05-31 18:58:26
  * @Description  : 目录处理相关类
  */
 
@@ -532,12 +532,12 @@ public:
         return 0;
     }
     /**
-     * @brief 获取文件的第一个数据块位置
+     * @brief 获取文件对应的硬盘inode下标
      *
      * @param file_path 文件路径
-     * @return int 第一个数据块位置，文件不存在时返回-1，路径错误时返回-2
+     * @return int 硬盘inode下标位置，文件不存在时返回-1，路径错误时返回-2
      */
-    int GetAddress(string file_path) {
+    int GetInodeID(string file_path) {
         int index = Find(file_path);
         if(index < 0)
             return index;

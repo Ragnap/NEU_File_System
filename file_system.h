@@ -2,15 +2,15 @@
  * @ 青空だけが見たいのは我儘ですか
  * @Author       : RagnaLP
  * @Date         : 2023-05-23 15:00:16
- * @LastEditTime : 2023-05-31 12:13:39
+ * @LastEditTime : 2023-05-31 19:46:25
  * @Description  : 文件系统类
  */
 
 #include "src/block_manager.h"
 #include "src/config.h"
+#include "src/memery_manager.h"
 #include "src/menu_manager.h"
 #include "src/user_manager.h"
-
 /**
  * @brief 文件系统类
  * 负责与各个模块进行通讯，同时负责基本的交互
@@ -23,6 +23,8 @@ private:
     MenuManager menu_manager;
     /// 块管理模块
     BlockMananger block_mananger;
+    /// 内存管理模块
+    MemeryManager memery_mananger;
     /**
      * @brief 清空系统
      *
@@ -31,6 +33,7 @@ private:
         block_mananger.Clear();
         menu_manager.Clear();
         user_manager.Clear();
+        memery_mananger.Clear();
     }
     /**
      * @brief 读取目录数据,目录数据块号固定为 BLOCK_NUM-1
@@ -52,12 +55,17 @@ public:
      */
     void Initalize(string root_password) {
         block_mananger.Initialize();
+        memery_mananger.Initialize();
         menu_manager.Initialize();
         user_manager.Initialize(root_password);
-        CreateFile("/~menu");
-        CreateFile("/~user");
-        WriteFile("/~menu", menu_manager.Save());
-        WriteFile("/~user", "     ");
+        CreateFile("/~menu", "SYSTEM");
+        CreateFile("/~user", "SYSTEM");
+        OpenFile("/~menu");
+        OpenFile("/~user");
+        WriteFile("/~menu", menu_manager.Save(), "SYSTEM");
+        WriteFile("/~user", user_manager.Save(), "SYSTEM");
+        CloseFile("/~menu");
+        CloseFile("/~user");
     }
 
     /**
@@ -88,13 +96,19 @@ public:
      * @brief 创建文件
      *
      * @param file_path 文件路径
-     * @return int -2:地址错误,-1:磁盘块不足,0:存在同名文件,1:成功
+     * @param user 操作用户
+     * @return int -3:硬盘inode数量不足 -2:地址错误,-1:磁盘块不足,0:存在同名文件,1:成功
      */
-    int CreateFile(string file_path) {
+    int CreateFile(string file_path, string user = "") {
         int block_id = block_mananger.CreateFile();
         if(block_id == -1)
             return -1;
-        int result = menu_manager.CreateFile(file_path, block_id);
+        int inode_id = memery_mananger.CreateFile(block_id, (user.empty() ? GetCurrentUser() : user));
+        if(inode_id == -1) {
+            block_mananger.DeleteFile(block_id);
+            return -3;
+        }
+        int result = menu_manager.CreateFile(file_path, inode_id);
         if(result == -1) {
             block_mananger.DeleteFile(block_id);
             return 0;
@@ -103,36 +117,61 @@ public:
             block_mananger.DeleteFile(block_id);
             return -2;
         }
+
         return 1;
+    }
+    /**
+     * @brief 打开文件到内存
+     *
+     * @param file_path 文件路径
+     * @return int -5:内存inode不足 -4:内存不足 -3:已经打开 -2:路径错误 -1:无对应文件 0:成功
+     */
+    int OpenFile(string file_path) {
+        int inode = menu_manager.GetInodeID(file_path);
+        if(inode < 0)
+            return inode;
+        string content = block_mananger.ReadFile(memery_mananger.GetDiscAddress(inode));
+        int result = memery_mananger.OpenFile(inode, content);
+        if(result < 0)
+            return result - 2;
+        return 0;
     }
     /**
      * @brief 读取文件
      *
      * @param file_path 文件路径
-     * @return pair<int, string> -2:路径错误 -1:无对应文件 0:成功
-     * @todo 需要判读是否在内存中才可读取文件
-     * @todo 判断用户权限
+     * @return pair<int, string> -3:文件未打开 -2:路径错误 -1:无对应文件 0:成功
      */
     pair<int, string> ReadFile(string file_path) {
-        int index = menu_manager.GetAddress(file_path);
-        if(index < 0)
-            return make_pair(-1, "");
-        return make_pair(0, block_mananger.ReadFile(index));
+        int inode = menu_manager.GetInodeID(file_path);
+        if(inode < 0)
+            return make_pair(inode, "");
+        if(!memery_mananger.IsOpened(inode))
+            return make_pair(-3, "");
+        return make_pair(0, memery_mananger.ReadFile(inode));
     }
     /**
      * @brief 写入文件
      *
      * @param file_path 文件路径
      * @param content 写入的内容
-     * @return int  -2:路径错误 -1:无对应文件,0:磁盘空间不足,1:成功
+     * @param user 操作者姓名，默认为当前登录用户
+     * @return int  -5:内存不足 -4:权限不足 -3:文件未打开 -2:路径错误 -1:无对应文件,0:磁盘空间不足,1:成功
      * @todo 判断文件是否在内存中才可读取
      * @todo 判断用户权限
      */
-    int WriteFile(string file_path, string content) {
-        int index = menu_manager.GetAddress(file_path);
-        if(index < 0)
-            return index;
-        return block_mananger.WriteFile(index, content);
+    int WriteFile(string file_path, string content, string user = "") {
+        int inode = menu_manager.GetInodeID(file_path);
+        if(inode < 0)
+            return inode;
+        if(!memery_mananger.IsOpened(inode))
+            return -3;
+        // 写入到内存
+        int result = memery_mananger.WriteFile(inode, (user.empty() ? GetCurrentUser() : user), content);
+        if(result < 0)
+            return result - 2;
+        // 写入到磁盘
+        return block_mananger.WriteFile(memery_mananger.GetDiscAddress(inode), content);
     }
 
     /**
@@ -149,15 +188,21 @@ public:
         // 删除单个文件
         if(files[0].first == -4) {
             menu_manager.DeleteFile(files[1].second, file_path);
-            block_mananger.DeleteFile(files[1].first);
+            int disc_address = memery_mananger.GetDiscAddress(files[1].first);
+            // 如果有修改权限才能删除
+            if(memery_mananger.DeleteFile(files[1].first, GetCurrentUser()))
+                block_mananger.DeleteFile(disc_address);
             return 0;
         }
         // 删除文件夹
         if(files[0].first != -3) {
-            // 删除非空文件夹下的所有文件
+            // 尝试删除非空文件夹下的所有文件
             for(auto i: files) {
                 menu_manager.DeleteFile(i.second, file_path);
-                block_mananger.DeleteFile(i.first);
+                int disc_address = memery_mananger.GetDiscAddress(i.first);
+                // 如果有修改权限才能删除
+                if(memery_mananger.DeleteFile(i.first, GetCurrentUser()))
+                    block_mananger.DeleteFile(disc_address);
             }
         }
         // 删除空文件夹
@@ -243,6 +288,7 @@ public:
      *
      */
     void Debug() {
+        memery_mananger.Debug();
         block_mananger.Debug();
         user_manager.Debug();
         menu_manager.Debug();

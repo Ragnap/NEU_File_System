@@ -2,7 +2,7 @@
  * @ 青空だけが見たいのは我儘ですか
  * @Author       : RagnaLP
  * @Date         : 2023-05-23 14:57:55
- * @LastEditTime : 2023-05-31 12:12:07
+ * @LastEditTime : 2023-05-31 15:55:45
  * @Description  : 文件系统的常量与用到的标准库
  */
 
@@ -38,4 +38,10 @@ const int DATA_BLOCK_SIZE = BLOCK_SIZE - sizeof(int);
 /// 存放文件数据的数据块总数
 const int DATA_BLOCK_NUM = BLOCK_NUM - LIST_BLOCK_NUM;
 
+/// 内存块大小
+const int MEM_BLOCK_SIZE = 32;
+/// 内存块数量
+const int MEM_BLOCK_NUM = 32;
+/// inode数量
+const int INODE_NUM = 10;
 #endif
