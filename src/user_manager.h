@@ -2,7 +2,7 @@
  * @ 青空だけが見たいのは我儘ですか
  * @Author       : RagnaLP
  * @Date         : 2023-05-23 15:05:59
- * @LastEditTime : 2023-05-25 16:57:40
+ * @LastEditTime : 2023-05-31 12:02:25
  * @Description  : 用户处理相关类
  */
 
@@ -104,6 +104,19 @@ public:
         }
     }
     /**
+     * @brief 将用户的数据转换成单个字符串
+     *
+     */
+    string Save() {
+        ostringstream data;
+        // 基本表
+        data << users.size() << "\n";
+        for(auto user: users) {
+            data << user.username << " " << user.password << "\n";
+        }
+        return data.str();
+    }
+    /**
      * @brief 读取所有用户信息
      *
      */
@@ -120,6 +133,25 @@ public:
             users.push_back(new_user);
         }
     }
+    /**
+     * @brief 从字符串形式的数据恢复数据
+     *
+     */
+    void Load(string data) {
+        istringstream in(data);
+        char username[50];
+        char password[50];
+        int siz;
+        in >> siz;
+        for(int i = 0; i < siz; i++) {
+            in >> username >> password;
+            User new_user;
+            new_user.username = username;
+            new_user.password = password;
+            users.push_back(new_user);
+        }
+    }
+
     /**
      * @brief 输出调试信息
      * 包含所有的用户

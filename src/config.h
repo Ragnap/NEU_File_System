@@ -2,7 +2,7 @@
  * @ 青空だけが見たいのは我儘ですか
  * @Author       : RagnaLP
  * @Date         : 2023-05-23 14:57:55
- * @LastEditTime : 2023-05-26 18:11:25
+ * @LastEditTime : 2023-05-31 12:12:07
  * @Description  : 文件系统的常量与用到的标准库
  */
 
@@ -15,6 +15,7 @@
 #include <iostream>
 #include <list>
 #include <map>
+#include <sstream>
 #include <stack>
 #include <string>
 #include <vector>
@@ -22,10 +23,12 @@ using namespace std;
 
 /// 文件路径
 const string FILE_PATH = "./data.byd";
+/// 可视化的文件路径
+const string DETAIL_FILE_PATH = "./detail_data.byd";
 /// 单块数据块字节大小
 const int BLOCK_SIZE = 32;
 /// 数据块总数
-const int BLOCK_NUM = 16;
+const int BLOCK_NUM = 64;
 /// 单个成组链中最大记录条数
 const int LIST_BLOCK_SIZE = BLOCK_SIZE / sizeof(int);
 /// 记录成组链表的数据块数量（成组链组数）

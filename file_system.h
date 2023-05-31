@@ -2,7 +2,7 @@
  * @ 青空だけが見たいのは我儘ですか
  * @Author       : RagnaLP
  * @Date         : 2023-05-23 15:00:16
- * @LastEditTime : 2023-05-29 19:59:58
+ * @LastEditTime : 2023-05-31 12:13:39
  * @Description  : 文件系统类
  */
 
@@ -32,6 +32,18 @@ private:
         menu_manager.Clear();
         user_manager.Clear();
     }
+    /**
+     * @brief 读取目录数据,目录数据块号固定为 BLOCK_NUM-1
+     */
+    string ReadMenu() {
+        return block_mananger.ReadFile(BLOCK_NUM - 1);
+    }
+    /**
+     * @brief 读取用户数据
+     */
+    string ReadUser() {
+        return ReadFile("/~user").second;
+    }
 
 public:
     /**
@@ -42,6 +54,10 @@ public:
         block_mananger.Initialize();
         menu_manager.Initialize();
         user_manager.Initialize(root_password);
+        CreateFile("/~menu");
+        CreateFile("/~user");
+        WriteFile("/~menu", menu_manager.Save());
+        WriteFile("/~user", "     ");
     }
 
     /**
@@ -189,10 +205,16 @@ public:
         FILE* f = fopen(FILE_PATH.c_str(), "w");
         if(f == NULL)
             return false;
+        // 保存到磁盘文件
+        WriteFile("/~menu", menu_manager.Save());
+        WriteFile("/~user", user_manager.Save());
         block_mananger.Save(f);
-        menu_manager.Save(f);
-        user_manager.Save(f);
         fclose(f);
+        // 保存为人眼可看的肉眼文件
+        FILE* detail_f = fopen(DETAIL_FILE_PATH.c_str(), "w");
+        menu_manager.Save(detail_f);
+        user_manager.Save(detail_f);
+        fclose(detail_f);
         return true;
     }
     /**
@@ -204,10 +226,16 @@ public:
         FILE* f = fopen(FILE_PATH.c_str(), "r");
         if(f == NULL)
             return false;
+        // 从磁盘文件读入
         block_mananger.Load(f);
-        menu_manager.Load(f);
-        user_manager.Load(f);
+        menu_manager.Load(ReadMenu());
+        user_manager.Load(ReadUser());
         fclose(f);
+        // 从肉眼文件读入
+        // FILE* detail_f = fopen(DETAIL_FILE_PATH.c_str(), "r");
+        // menu_manager.Load(detail_f);
+        // user_manager.Load(detail_f);
+        // fclose(detail_f);
         return true;
     }
     /**

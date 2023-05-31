@@ -2,7 +2,7 @@
  * @ 青空だけが見たいのは我儘ですか
  * @Author       : RagnaLP
  * @Date         : 2023-05-23 15:05:59
- * @LastEditTime : 2023-05-31 11:16:36
+ * @LastEditTime : 2023-05-31 12:00:22
  * @Description  : 目录处理相关类
  */
 
@@ -586,7 +586,7 @@ public:
     void ShowFolder() {
         cout << endl;
         for(int j = 0; j < folders[now_folder].items.size(); j++) {
-            if(folders[now_folder].items[j].name == "." || folders[now_folder].items[j].name == "..")
+            if(folders[now_folder].items[j].name == "." || folders[now_folder].items[j].name == ".." || folders[now_folder].items[j].name[0] == '~')
                 continue;
             cout << " ";
             cout << setw(15) << left << folders[now_folder].items[j].name << " ";
@@ -620,6 +620,27 @@ public:
             }
         }
     }
+    /**
+     * @brief 将目录文件的数据转换成单个字符串
+     *
+     */
+    string Save() {
+        ostringstream data;
+        // 基本表
+        data << base_file_count << "\n";
+        for(auto item: base_file_list.items) {
+            data << item.first << " " << item.second.index << " " << item.second.is_folder << " " << item.second.name << "\n";
+        }
+        // 文件夹表
+        data << folders.size() << "\n";
+        for(auto folder: folders) {
+            data << folder.first << " " << folder.second.items.size() << "\n";
+            for(auto item: folder.second.items) {
+                data << item.name << " " << item.index << "\n";
+            }
+        }
+        return data.str();
+    }
 
     /**
      * @brief 从文件恢复目录数据
@@ -647,6 +668,32 @@ public:
         }
     }
 
+    /**
+     * @brief 从字符串形式的数据恢复数据
+     *
+     */
+    void Load(string data) {
+        istringstream in(data);
+        int id, index, is_folder, siz;
+        char name[50];
+        // 基本表
+        in >> base_file_count;
+        for(int i = 0; i < base_file_count; i++) {
+            in >> id >> index >> is_folder >> name;
+            base_file_list.Add(id, index, is_folder, string(name));
+        }
+        // 文件夹表
+        in >> folder_count;
+        for(int i = 0; i < folder_count; i++) {
+            Folder new_folder;
+            in >> id >> siz;
+            for(int j = 0; j < siz; j++) {
+                in >> name >> index;
+                new_folder.Add(string(name), index);
+            }
+            folders[id] = new_folder;
+        }
+    }
     /**
      * @brief 输出调试信息
      * 包含基本文件目录和所有的文件夹目录
