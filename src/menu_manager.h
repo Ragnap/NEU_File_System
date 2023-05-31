@@ -2,7 +2,7 @@
  * @ 青空だけが見たいのは我儘ですか
  * @Author       : RagnaLP
  * @Date         : 2023-05-23 15:05:59
- * @LastEditTime : 2023-05-31 12:00:22
+ * @LastEditTime : 2023-05-31 13:22:08
  * @Description  : 目录处理相关类
  */
 
@@ -364,7 +364,7 @@ public:
                 folder_name = folder_path.substr(delimiter_pos + 1);
             }
             else {
-                folder_id = Find(upper_folder_path);
+                folder_id = base_file_list.GetIndex(Find(upper_folder_path));
                 folder_name = folder_path.substr(delimiter_pos + 1);
             }
         }
@@ -455,7 +455,7 @@ public:
                 file_name = file_path.substr(delimiter_pos + 1);
             }
             else {
-                folder_id = Find(upper_folder_path);
+                folder_id = base_file_list.GetIndex(Find(upper_folder_path));
                 file_name = file_path.substr(delimiter_pos + 1);
             }
         }
