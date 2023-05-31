@@ -2,18 +2,19 @@
  * @ 青空だけが見たいのは我儘ですか
  * @Author       : RagnaLP
  * @Date         : 2023-05-23 15:17:14
- * @LastEditTime : 2023-05-30 14:35:34
+ * @LastEditTime : 2023-05-31 09:49:18
  * @Description  :
  */
 
 #include "file_system.h"
-
+#include "lib/custom_io_lib.h"
+#undef CreateFile
 FileSystem file_system;
 int main() {
     // 指令
     string ope = "";
     // 操作数
-    string arg[5];
+    vector<string> arg;
     // 操作结果
     int result;
 
@@ -35,7 +36,15 @@ int main() {
     }
     else {
         cout << "初次使用系统，请设置root用户密码：" << endl;
-        cin >> arg[0];
+        while(1) {
+            int input_check = ReadString(1, arg, CheckCharOneByte);
+            if(input_check == -1)
+                PrintError("输入参数不足");
+            else if(input_check == -2)
+                PrintError("参数非法");
+            else
+                break;
+        }
         file_system.Initalize(arg[0]);
     }
     // 系统每次循环对应单个用户
@@ -45,87 +54,132 @@ int main() {
         while(1) {
             string username, password;
             cout << "用户名: ";
-            cin >> username;
+            ReadString(username, CheckNoControlChar);
             cout << "密  码: ";
-            cin >> password;
+            ReadString(password, CheckNoControlChar);
+
             int result = file_system.Login(username, password);
             if(result == -1)
-                cout << "用户不存在！" << endl << endl;
+                PrintError("用户不存在！");
             else if(result == 0)
-                cout << "密码错误！" << endl << endl;
+                PrintError("密码错误！");
             else {
-                cout << endl << "欢迎登录！" << endl << endl;
+                PrintInfo("欢迎登录！");
                 break;
             }
         }
         // 系统处理
         while(1) {
-            cout << "[" << file_system.GetCurrentUser() << "@FileSystem " << file_system.GetCurrentPath() << "]# ";
+            PrintLine("[" + file_system.GetCurrentUser() + "@FileSystem ", 0);
+            PrintWarn(file_system.GetCurrentPath(), 0, 0);
+            PrintLine("]# ", 0);
 
-            cin >> ope;
+            ope = ReadString();
             if(ope == "ls") {
                 file_system.ShowFolder();
             }
             else if(ope == "cd") {
-                cin >> arg[0];
+                int input_check = ReadString(1, arg, CheckCharOneByte);
+                if(input_check != 0) {
+                    if(input_check == -1)
+                        PrintError("输入参数不足");
+                    else if(input_check == -2)
+                        PrintError("参数非法");
+                    continue;
+                }
                 if(!file_system.ChangeFolder(arg[0]))
-                    cout << "\t路径错误" << endl;
+                    PrintError("路径错误");
             }
             else if(ope == "mkdir") {
-                cin >> arg[0];
+                int input_check = ReadString(1, arg, CheckCharOneByte);
+                if(input_check != 0) {
+                    if(input_check == -1)
+                        PrintError("输入参数不足");
+                    else if(input_check == -2)
+                        PrintError("参数非法");
+                    continue;
+                }
                 int result = file_system.CreateFolder(arg[0]);
                 if(result == -1)
-                    cout << "\t存在同名文件夹" << endl;
+                    PrintError("存在同名文件夹");
                 else if(result == -2)
-                    cout << "\t路径错误" << endl;
+                    PrintError("路径错误");
                 else
-                    cout << "\t创建成功" << endl;
+                    PrintInfo("创建成功");
             }
             else if(ope == "create") {
-                cin >> arg[0];
+                int input_check = ReadString(1, arg, CheckCharOneByte);
+                if(input_check != 0) {
+                    if(input_check == -1)
+                        PrintError("输入参数不足");
+                    else if(input_check == -2)
+                        PrintError("参数非法");
+                    continue;
+                }
                 int result = file_system.CreateFile(arg[0]);
                 if(result == 0)
-                    cout << "\t存在同名文件夹" << endl;
+                    PrintError("存在同名文件夹");
                 else if(result == -1)
-                    cout << "\t磁盘块空间不足" << endl;
+                    PrintError("磁盘块空间不足");
                 else if(result == -2)
-                    cout << "\t路径错误" << endl;
+                    PrintError("路径错误");
                 else
-                    cout << "\t创建成功" << endl;
+                    PrintInfo("创建成功");
             }
             else if(ope == "read") {
-                cin >> arg[0];
+                int input_check = ReadString(1, arg, CheckCharOneByte);
+                if(input_check != 0) {
+                    if(input_check == -1)
+                        PrintError("输入参数不足");
+                    else if(input_check == -2)
+                        PrintError("参数非法");
+                    continue;
+                }
                 pair<int, string> result = file_system.ReadFile(arg[0]);
                 if(result.first == -1)
                     cout << "\t文件不存在" << endl;
                 else if(result.first == -2)
-                    cout << "\t路径错误" << endl;
+                    PrintError("路径错误");
                 else {
-                    cout << "\t读取成功，共读取到 " << result.second.size() << " 个字节:" << endl << endl;
-                    cout << result.second << endl << endl;
+                    PrintInfo("读取成功，共读取到" + to_string(result.second.size()) + " 个字节:", 2);
+                    PrintLine(result.second, 2);
                 }
             }
             else if(ope == "write") {
-                cin >> arg[0] >> arg[1];
+                int input_check = ReadString(2, arg, CheckCharOneByte);
+                if(input_check != 0) {
+                    if(input_check == -1)
+                        PrintError("输入参数不足");
+                    else if(input_check == -2)
+                        PrintError("参数非法");
+                    continue;
+                }
                 int result = file_system.WriteFile(arg[0], arg[1]);
                 if(result == -1)
-                    cout << "\t文件不存在" << endl;
+                    PrintError("文件不存在");
                 else if(result == -2)
-                    cout << "\t路径错误" << endl;
+                    PrintError("路径错误");
                 else if(result == 0)
-                    cout << "\t磁盘空间不足" << endl;
+                    PrintError("磁盘块空间不足");
                 else
-                    cout << "\t写入成功" << endl;
+                    PrintInfo("写入成功");
             }
             else if(ope == "delete") {
-                cin >> arg[0];
+                int input_check = ReadString(1, arg, CheckCharOneByte);
+                if(input_check != 0) {
+                    if(input_check == -1)
+                        PrintError("输入参数不足");
+                    else if(input_check == -2)
+                        PrintError("参数非法");
+                    continue;
+                }
                 int result = file_system.DeleteFiles(arg[0]);
                 if(result == -1)
-                    cout << "\t文件不存在" << endl;
+                    PrintError("文件不存在");
                 else if(result == -2)
-                    cout << "\t路径错误" << endl;
+                    PrintError("路径错误");
                 else
-                    cout << "\t删除成功" << endl;
+                    PrintInfo("删除成功");
             }
             else if(ope == "save") {
                 file_system.Save();
@@ -171,8 +225,10 @@ int main() {
                      << " - 输出调试用的文件系统的信息" << endl;
                 cout << endl;
             }
-            else
-                cout << "指令错误!" << endl;
+            else {
+                PrintError("指令错误!");
+                ClearFollowInput();
+            }
         }
     }
 
