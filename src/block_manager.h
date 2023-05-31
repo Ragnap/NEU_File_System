@@ -2,7 +2,7 @@
  * @ 青空だけが見たいのは我儘ですか
  * @Author       : RagnaLP
  * @Date         : 2023-05-26 09:41:57
- * @LastEditTime : 2023-05-29 17:33:27
+ * @LastEditTime : 2023-05-31 11:28:39
  * @Description  : 超级块与磁盘块系统
  */
 #include "config.h"
@@ -142,14 +142,12 @@ public:
      */
     void DeleteFile(int start_block_id) {
         int now_block_id = start_block_id;
-        while(now_block_id != -1) {
-            int next_block_id = block[now_block_id].data_block.next;
-            // 清空数据
-            block[now_block_id].clear();
-            // 释放数据块
-            ReleaseBlock(now_block_id);
-            now_block_id = next_block_id;
-        }
+        if(block[start_block_id].data_block.next != -1)
+            DeleteFile(block[start_block_id].data_block.next);
+        // 清空数据
+        block[start_block_id].clear();
+        // 释放数据块
+        ReleaseBlock(start_block_id);
     }
     /**
      * @brief 为一个新的空文件创建块

@@ -2,7 +2,7 @@
  * @ 青空だけが見たいのは我儘ですか
  * @Author       : RagnaLP
  * @Date         : 2023-05-23 15:05:59
- * @LastEditTime : 2023-05-29 20:30:03
+ * @LastEditTime : 2023-05-31 11:16:36
  * @Description  : 目录处理相关类
  */
 
@@ -358,8 +358,15 @@ public:
         else {
             // 查找对应的文件夹
             string upper_folder_path = folder_path.substr(0, delimiter_pos);
-            folder_id = Find(upper_folder_path);
-            folder_name = folder_path.substr(delimiter_pos + 1);
+            // 在根目录下
+            if(upper_folder_path.empty()) {
+                folder_id = 0;
+                folder_name = folder_path.substr(delimiter_pos + 1);
+            }
+            else {
+                folder_id = Find(upper_folder_path);
+                folder_name = folder_path.substr(delimiter_pos + 1);
+            }
         }
 
         // 创建新文件夹目录
@@ -442,8 +449,15 @@ public:
         else {
             // 查找对应的文件夹
             string upper_folder_path = file_path.substr(0, delimiter_pos);
-            folder_id = Find(upper_folder_path);
-            file_name = file_path.substr(delimiter_pos + 1);
+            // 在根目录下
+            if(upper_folder_path.empty()) {
+                folder_id = 0;
+                file_name = file_path.substr(delimiter_pos + 1);
+            }
+            else {
+                folder_id = Find(upper_folder_path);
+                file_name = file_path.substr(delimiter_pos + 1);
+            }
         }
 
         // 基本文件目录中新增一项
