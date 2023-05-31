@@ -2,13 +2,13 @@
  * @ 青空だけが見たいのは我儘ですか
  * @Author       : RagnaLP
  * @Date         : 2023-05-23 15:00:16
- * @LastEditTime : 2023-05-31 19:46:25
+ * @LastEditTime : 2023-05-31 20:25:43
  * @Description  : 文件系统类
  */
 
 #include "src/block_manager.h"
 #include "src/config.h"
-#include "src/memery_manager.h"
+#include "src/memory_manager.h"
 #include "src/menu_manager.h"
 #include "src/user_manager.h"
 /**
@@ -22,30 +22,36 @@ private:
     /// 目录管理模块
     MenuManager menu_manager;
     /// 块管理模块
-    BlockMananger block_mananger;
+    BlockMananger block_manager;
     /// 内存管理模块
-    MemeryManager memery_mananger;
+    MemeryManager memory_manager;
     /**
      * @brief 清空系统
      *
      */
     void Clear() {
-        block_mananger.Clear();
+        block_manager.Clear();
         menu_manager.Clear();
         user_manager.Clear();
-        memery_mananger.Clear();
+        memory_manager.Clear();
     }
     /**
      * @brief 读取目录数据,目录数据块号固定为 BLOCK_NUM-1
      */
     string ReadMenu() {
-        return block_mananger.ReadFile(BLOCK_NUM - 1);
+        return block_manager.ReadFile(BLOCK_NUM - 1);
     }
     /**
-     * @brief 读取用户数据
+     * @brief 读取inode节点数据，数据块号固定为 BLOCK_NUM-2
+     */
+    string ReadMemory() {
+        return block_manager.ReadFile(BLOCK_NUM - 2);
+    };
+    /**
+     * @brief 读取用户数据,数据块号固定为 BLOCK_NUM-3
      */
     string ReadUser() {
-        return ReadFile("/~user").second;
+        return block_manager.ReadFile(BLOCK_NUM - 3);
     }
 
 public:
@@ -54,18 +60,24 @@ public:
      *
      */
     void Initalize(string root_password) {
-        block_mananger.Initialize();
-        memery_mananger.Initialize();
+        block_manager.Initialize();
+        memory_manager.Initialize();
         menu_manager.Initialize();
         user_manager.Initialize(root_password);
         CreateFile("/~menu", "SYSTEM");
+        CreateFile("/~inode", "SYSTEM");
         CreateFile("/~user", "SYSTEM");
         OpenFile("/~menu");
+        OpenFile("/~inode");
         OpenFile("/~user");
         WriteFile("/~menu", menu_manager.Save(), "SYSTEM");
         WriteFile("/~user", user_manager.Save(), "SYSTEM");
-        CloseFile("/~menu");
-        CloseFile("/~user");
+        WriteFile("/~inode", memory_manager.Save(), "SYSTEM");
+        getchar();
+        getchar();
+        // CloseFile("/~menu");
+        // CloseFile("/~inode");
+        // CloseFile("/~user");
     }
 
     /**
@@ -100,21 +112,21 @@ public:
      * @return int -3:硬盘inode数量不足 -2:地址错误,-1:磁盘块不足,0:存在同名文件,1:成功
      */
     int CreateFile(string file_path, string user = "") {
-        int block_id = block_mananger.CreateFile();
+        int block_id = block_manager.CreateFile();
         if(block_id == -1)
             return -1;
-        int inode_id = memery_mananger.CreateFile(block_id, (user.empty() ? GetCurrentUser() : user));
+        int inode_id = memory_manager.CreateFile(block_id, (user.empty() ? GetCurrentUser() : user));
         if(inode_id == -1) {
-            block_mananger.DeleteFile(block_id);
+            block_manager.DeleteFile(block_id);
             return -3;
         }
         int result = menu_manager.CreateFile(file_path, inode_id);
         if(result == -1) {
-            block_mananger.DeleteFile(block_id);
+            block_manager.DeleteFile(block_id);
             return 0;
         }
         if(result == -2) {
-            block_mananger.DeleteFile(block_id);
+            block_manager.DeleteFile(block_id);
             return -2;
         }
 
@@ -130,8 +142,8 @@ public:
         int inode = menu_manager.GetInodeID(file_path);
         if(inode < 0)
             return inode;
-        string content = block_mananger.ReadFile(memery_mananger.GetDiscAddress(inode));
-        int result = memery_mananger.OpenFile(inode, content);
+        string content = block_manager.ReadFile(memory_manager.GetDiscAddress(inode));
+        int result = memory_manager.OpenFile(inode, content);
         if(result < 0)
             return result - 2;
         return 0;
@@ -146,9 +158,9 @@ public:
         int inode = menu_manager.GetInodeID(file_path);
         if(inode < 0)
             return make_pair(inode, "");
-        if(!memery_mananger.IsOpened(inode))
+        if(!memory_manager.IsOpened(inode))
             return make_pair(-3, "");
-        return make_pair(0, memery_mananger.ReadFile(inode));
+        return make_pair(0, memory_manager.ReadFile(inode));
     }
     /**
      * @brief 写入文件
@@ -164,14 +176,14 @@ public:
         int inode = menu_manager.GetInodeID(file_path);
         if(inode < 0)
             return inode;
-        if(!memery_mananger.IsOpened(inode))
+        if(!memory_manager.IsOpened(inode))
             return -3;
         // 写入到内存
-        int result = memery_mananger.WriteFile(inode, (user.empty() ? GetCurrentUser() : user), content);
+        int result = memory_manager.WriteFile(inode, (user.empty() ? GetCurrentUser() : user), content);
         if(result < 0)
             return result - 2;
         // 写入到磁盘
-        return block_mananger.WriteFile(memery_mananger.GetDiscAddress(inode), content);
+        return block_manager.WriteFile(memory_manager.GetDiscAddress(inode), content);
     }
 
     /**
@@ -188,10 +200,10 @@ public:
         // 删除单个文件
         if(files[0].first == -4) {
             menu_manager.DeleteFile(files[1].second, file_path);
-            int disc_address = memery_mananger.GetDiscAddress(files[1].first);
+            int disc_address = memory_manager.GetDiscAddress(files[1].first);
             // 如果有修改权限才能删除
-            if(memery_mananger.DeleteFile(files[1].first, GetCurrentUser()))
-                block_mananger.DeleteFile(disc_address);
+            if(memory_manager.DeleteFile(files[1].first, GetCurrentUser()))
+                block_manager.DeleteFile(disc_address);
             return 0;
         }
         // 删除文件夹
@@ -199,10 +211,10 @@ public:
             // 尝试删除非空文件夹下的所有文件
             for(auto i: files) {
                 menu_manager.DeleteFile(i.second, file_path);
-                int disc_address = memery_mananger.GetDiscAddress(i.first);
+                int disc_address = memory_manager.GetDiscAddress(i.first);
                 // 如果有修改权限才能删除
-                if(memery_mananger.DeleteFile(i.first, GetCurrentUser()))
-                    block_mananger.DeleteFile(disc_address);
+                if(memory_manager.DeleteFile(i.first, GetCurrentUser()))
+                    block_manager.DeleteFile(disc_address);
             }
         }
         // 删除空文件夹
@@ -253,12 +265,14 @@ public:
         // 保存到磁盘文件
         WriteFile("/~menu", menu_manager.Save());
         WriteFile("/~user", user_manager.Save());
-        block_mananger.Save(f);
+        WriteFile("/~inode", memory_manager.Save());
+        block_manager.Save(f);
         fclose(f);
         // 保存为人眼可看的肉眼文件
         FILE* detail_f = fopen(DETAIL_FILE_PATH.c_str(), "w");
         menu_manager.Save(detail_f);
         user_manager.Save(detail_f);
+        memory_manager.Save(detail_f);
         fclose(detail_f);
         return true;
     }
@@ -272,8 +286,9 @@ public:
         if(f == NULL)
             return false;
         // 从磁盘文件读入
-        block_mananger.Load(f);
+        block_manager.Load(f);
         menu_manager.Load(ReadMenu());
+        memory_manager.Load(ReadMemory());
         user_manager.Load(ReadUser());
         fclose(f);
         // 从肉眼文件读入
@@ -288,8 +303,8 @@ public:
      *
      */
     void Debug() {
-        memery_mananger.Debug();
-        block_mananger.Debug();
+        memory_manager.Debug();
+        block_manager.Debug();
         user_manager.Debug();
         menu_manager.Debug();
     }

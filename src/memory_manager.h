@@ -2,7 +2,7 @@
  * @ 青空だけが見たいのは我儘ですか
  * @Author       : RagnaLP
  * @Date         : 2023-05-31 14:41:28
- * @LastEditTime : 2023-05-31 19:40:11
+ * @LastEditTime : 2023-05-31 20:09:35
  * @Description  : 内存管理与Inode系统
  */
 #include "config.h"
@@ -45,9 +45,6 @@ private:
 
     /// 空闲内存块块号栈
     stack<int> free_mem_block;
-
-    /// 已打开的文件对应的磁盘inode编号->内存inode编号
-    vector<int> opened_file;
 
     /**
      * @brief 获取某个文件在内存中的首地址
@@ -100,6 +97,7 @@ private:
     void DeleteMem(int start_mem_address) {
         if(mem_next[start_mem_address] != -1)
             DeleteMem(mem_next[start_mem_address]);
+        mem_next[start_mem_address] = -1;
         memset(mem[start_mem_address], 0, sizeof(mem[start_mem_address]));
         free_mem_block.push(start_mem_address);
     }
@@ -140,8 +138,6 @@ public:
         memset(mem_next, -1, sizeof(mem_next));
         while(!free_mem_block.empty())
             free_mem_block.pop();
-
-        opened_file.clear();
     }
 
     /**
@@ -291,6 +287,73 @@ public:
         free_disc_inode.push(disc_inode_id);
         return 1;
     }
+    /**
+     * @brief 将索引文件的数据转换成单个字符串
+     *
+     */
+    void Save(FILE* file) {
+        // 空闲磁盘inode表
+        fprintf(file, "%d\n", free_disc_inode.size());
+        stack<int> temp = free_disc_inode;
+        while(!temp.empty()) {
+            fprintf(file, "%d ", temp.top());
+            temp.pop();
+        }
+        fprintf(file, "\n");
+        // 文件夹表
+        fprintf(file, "%d\n", disc_inodes.size());
+        for(auto i: disc_inodes) {
+            fprintf(file, "%d %s %d %d\n", i.first, i.second.creator.c_str(), i.second.file_size, i.second.disc_block_address);
+        }
+    }
+    /**
+     * @brief 将索引文件的数据转换成单个字符串
+     *
+     */
+    string Save() {
+        ostringstream data;
+        // 空闲磁盘inode表
+        data << free_disc_inode.size() << "\n";
+        stack<int> temp = free_disc_inode;
+        while(!temp.empty()) {
+            data << temp.top() << " ";
+            temp.pop();
+        }
+        data << "\n";
+        // 已有磁盘inode表
+        data << disc_inodes.size() << "\n";
+        for(auto i: disc_inodes) {
+            data << i.first << " " << i.second.creator << " " << i.second.file_size << " " << i.second.disc_block_address << "\n";
+        }
+        return data.str();
+    }
+    /**
+     * @brief 从字符串形式的数据恢复数据
+     *
+     */
+    void Load(string data) {
+        istringstream in(data);
+        int id, siz;
+        // 空闲磁盘inode表
+        in >> siz;
+        for(int i = 0; i < siz; i++) {
+            in >> id;
+            free_disc_inode.push(id);
+        }
+        // 已有磁盘inode表
+        in >> siz;
+        for(int i = 0; i < siz; i++) {
+            DiscIndexNode inode;
+            in >> id >> inode.creator >> inode.file_size >> inode.disc_block_address;
+            inode.mem_inode_id = 0;
+            disc_inodes[id] = inode;
+        }
+        // 初始化内存有关
+        for(int i = 0; i < INODE_NUM; i++)
+            free_mem_inode.push(i);
+        for(int i = 0; i < MEM_BLOCK_NUM; i++)
+            free_mem_block.push(i);
+    }
 
     void Debug() {
         cout << endl << "内存情况如下：" << endl;
@@ -299,7 +362,7 @@ public:
             cout << "-";
         cout << endl;
         for(int i = 0; i < MEM_BLOCK_NUM; i++) {
-            cout << setw(3) << i + 1 << " | ";
+            cout << setw(3) << i << " | ";
             for(int j = 0; j < MEM_BLOCK_SIZE; j++) {
                 if(mem[i][j] == '\n')
                     cout << setw(3) << "\\n";
