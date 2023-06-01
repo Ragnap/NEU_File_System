@@ -2,7 +2,7 @@
  * @ 青空だけが見たいのは我儘ですか
  * @Author       : RagnaLP
  * @Date         : 2023-05-23 15:05:59
- * @LastEditTime : 2023-06-01 14:52:31
+ * @LastEditTime : 2023-06-01 15:21:23
  * @Description  : 目录处理相关类
  */
 
@@ -344,7 +344,6 @@ public:
         // 已存在同名文件
         if(check != -1)
             return -1;
-
         string folder_name;
         int folder_id = now_folder;
 
@@ -550,6 +549,42 @@ public:
         // 修改基本文件表中的名称
         base_file_list.items[id].name = new_name;
         return 0;
+    }
+    /**
+     * @brief 移动文件夹
+     *
+     * @param origin_path 源文件(夹)路径
+     * @param dest_path 目标文件夹路径
+     * @return int -4:目标路径不是文件夹 -3:目标路径错误 -2:源路径错误 -1:源文件不存在
+     */
+    int MoveFile(string origin_path, string dest_path) {
+        // 定位源文件
+        int ori_id = Find(origin_path);
+        if(ori_id < 0)
+            return ori_id;
+        // 定位目标文件夹
+        int dest_id = Find(dest_path);
+        if(dest_id < 0)
+            return -3;
+        // 若目标不是文件夹
+        if(!base_file_list.GetIsFolder(dest_id))
+            return -4;
+        // 定位源文件所在文件夹
+        int ori_folder_id, delimiter_pos = origin_path.find_last_of('/');
+        // 就是个纯文件，不包含路径
+        if(delimiter_pos == -1) {
+            ori_folder_id = folders[base_file_list.GetIndex(now_folder_base_id)].Find("..");
+            // 根目录没有父文件夹
+            ori_folder_id = (ori_folder_id == -1) ? 0 : ori_folder_id;
+        }
+        // 查找路径上的父文件夹
+        else
+            ori_folder_id = Find(origin_path.substr(0, delimiter_pos));
+
+        // 源父文件夹移出
+        folders[ori_folder_id].Delete(ori_id);
+        // 目标文件夹新增
+        folders[dest_id].Add(base_file_list.GetName(ori_id), ori_id);
     }
     /**
      * @brief 递归删除指定文件夹下所有的空文件夹(只包含文件夹的文件夹)，包括当前文件夹，不删除根目录

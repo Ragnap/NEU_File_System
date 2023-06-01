@@ -1,41 +1,19 @@
-9
+4
 0 0 1 root
 1 9 0 ~menu
 2 8 0 ~inode
 3 7 0 ~user
-4 1 1 hello
-5 2 1 check
-6 3 1 world
-7 0 0 yes!
-8 6 0 root.file
-4
-0 6
+1
+0 4
 . 0
 ~menu 1
 ~inode 2
 ~user 3
-hello 4
-check 5
-1 4
-.. 0
-. 4
-world 6
-yes! 7
-2 2
-.. 0
-. 5
-3 3
-.. 1
-. 6
-root.file 8
-2
+1
 root admin
-ragna 123
-5
-1 2 3 4 5 
-5
-0 root 39 55
-6 root 18 49
-7 SYSTEM 23 61
-8 SYSTEM 87 62
-9 SYSTEM 230 63
+7
+6 5 4 3 2 1 0 
+3
+7 SYSTEM 13 61
+8 SYSTEM 64 62
+9 SYSTEM 85 63

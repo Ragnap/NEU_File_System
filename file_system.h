@@ -2,7 +2,7 @@
  * @ 青空だけが見たいのは我儘ですか
  * @Author       : RagnaLP
  * @Date         : 2023-05-23 15:00:16
- * @LastEditTime : 2023-06-01 14:31:45
+ * @LastEditTime : 2023-06-01 15:57:10
  * @Description  : 文件系统类
  */
 
@@ -73,8 +73,6 @@ public:
         WriteFile("/~menu", menu_manager.Save(), "SYSTEM");
         WriteFile("/~user", user_manager.Save(), "SYSTEM");
         WriteFile("/~inode", memory_manager.Save(), "SYSTEM");
-        getchar();
-        getchar();
         CloseFile("/~menu");
         CloseFile("/~inode");
         CloseFile("/~user");
@@ -100,7 +98,7 @@ public:
      *
      * @param folder_path 文件夹路径
      */
-    bool CreateFolder(string folder_path) {
+    int CreateFolder(string folder_path) {
         return menu_manager.CreateFolder(folder_path);
     }
 
@@ -249,6 +247,17 @@ public:
     }
 
     /**
+     * @brief 移动文件夹
+     *
+     * @param origin_path 源文件(夹)路径
+     * @param dest_path 目标文件夹路径
+     * @return int -4:目标路径不是文件夹 -3:目标路径错误 -2:源路径错误 -1:源文件不存在
+     */
+    int MoveFiles(string origin_path, string dest_folder_path) {
+        return menu_manager.MoveFile(origin_path, dest_folder_path);
+    }
+
+    /**
      * @brief 跳转到新的目录
      *
      * @param folder_path 新目录的路径
@@ -299,9 +308,17 @@ public:
         if(f == NULL)
             return false;
         // 保存到磁盘文件
+        OpenFile("/~menu");
         WriteFile("/~menu", menu_manager.Save(), "SYSTEM");
+        CloseFile("/~menu");
+
+        OpenFile("/~user");
         WriteFile("/~user", user_manager.Save(), "SYSTEM");
+        CloseFile("/~user");
+
+        OpenFile("/~inode");
         WriteFile("/~inode", memory_manager.Save(), "SYSTEM");
+        CloseFile("/~inode");
         block_manager.Save(f);
         fclose(f);
         // 保存为人眼可看的肉眼文件

@@ -2,7 +2,7 @@
  * @ 青空だけが見たいのは我儘ですか
  * @Author       : RagnaLP
  * @Date         : 2023-05-23 15:17:14
- * @LastEditTime : 2023-06-01 14:58:38
+ * @LastEditTime : 2023-06-01 15:34:52
  * @Description  :
  */
 
@@ -118,7 +118,7 @@ int main() {
                 }
                 int result = file_system.CreateFile(arg[0]);
                 if(result == 0)
-                    PrintError("存在同名文件夹");
+                    PrintError("存在同名文件");
                 else if(result == -1)
                     PrintError("磁盘块空间不足");
                 else if(result == -2)
@@ -179,7 +179,7 @@ int main() {
                 }
                 pair<int, string> result = file_system.ReadFile(arg[0]);
                 if(result.first == -1)
-                    cout << "\t文件不存在" << endl;
+                    PrintError("文件不存在");
                 else if(result.first == -2)
                     PrintError("路径错误");
                 else if(result.first == -3)
@@ -248,6 +248,27 @@ int main() {
                 else
                     PrintInfo("重命名成功");
             }
+            else if(ope == "move") {
+                int input_check = ReadString(2, arg, CheckCharOneByte);
+                if(input_check != 0) {
+                    if(input_check == -1)
+                        PrintError("输入参数不足");
+                    else if(input_check == -2)
+                        PrintError("参数非法");
+                    continue;
+                }
+                bool result = file_system.MoveFiles(arg[0], arg[1]);
+                if(result == -1)
+                    PrintError("源文件不存在");
+                else if(result == -2)
+                    PrintError("源路径错误");
+                else if(result == -3)
+                    PrintError("目标路径错误");
+                else if(result == -4)
+                    PrintError("目标路径不是文件夹");
+                else
+                    PrintInfo("移动成功");
+            }
             else if(ope == "signup") {
                 int input_check = ReadString(2, arg, CheckCharOneByte);
                 if(input_check != 0) {
@@ -312,6 +333,10 @@ int main() {
                      << " - 将内容写入到指定路径下的一个文件" << endl;
                 cout << "\t " << setw(30) << left << "delete <path/name>"
                      << " - 删除路径对应的文件夹的所有内容或路径对应的文件" << endl;
+                cout << "\t " << setw(30) << left << "rename <path/name> <new name>"
+                     << " - 对路径对应的文件夹或文件进行重命名" << endl;
+                cout << "\t " << setw(30) << left << "move <path/name> <dest path>"
+                     << " - 移动源文件夹或文件到目标文件夹" << endl;
                 cout << "\t " << setw(30) << left << "save"
                      << " - 保存整个文件系统" << endl;
                 cout << "\t " << setw(30) << left << "load"
