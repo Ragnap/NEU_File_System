@@ -2,7 +2,7 @@
  * @ 青空だけが見たいのは我儘ですか
  * @Author       : RagnaLP
  * @Date         : 2023-05-31 14:41:28
- * @LastEditTime : 2023-06-01 10:26:34
+ * @LastEditTime : 2023-06-01 17:11:54
  * @Description  : 内存管理与Inode系统
  */
 #include "config.h"
@@ -80,8 +80,8 @@ private:
                 break;
 
             // 当前内存块满但还没写完，分配新块
-            int new_block = free_mem_inode.top();
-            free_mem_inode.pop();
+            int new_block = free_mem_block.top();
+            free_mem_block.pop();
 
             mem_next[now_block] = new_block;
             now_block = new_block;

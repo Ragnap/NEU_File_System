@@ -2,7 +2,7 @@
  * @ 青空だけが見たいのは我儘ですか
  * @Author       : RagnaLP
  * @Date         : 2023-05-23 15:05:59
- * @LastEditTime : 2023-06-01 15:21:23
+ * @LastEditTime : 2023-06-01 17:25:53
  * @Description  : 目录处理相关类
  */
 
@@ -135,6 +135,7 @@ typedef struct Folder {
         for(int i = 0; i < items.size(); i++)
             if(items[i].index == index) {
                 items.erase(items.begin() + i);
+                break;
             }
     }
 } Folder;
@@ -345,7 +346,7 @@ public:
         if(check != -1)
             return -1;
         string folder_name;
-        int folder_id = now_folder;
+        int folder_id = now_folder_base_id;
 
         // 确定文件夹位置
 
@@ -363,7 +364,7 @@ public:
                 folder_name = folder_path.substr(delimiter_pos + 1);
             }
             else {
-                folder_id = base_file_list.GetIndex(Find(upper_folder_path));
+                folder_id = Find(upper_folder_path);
                 folder_name = folder_path.substr(delimiter_pos + 1);
             }
         }
@@ -381,7 +382,7 @@ public:
         // 文件夹目录新增一项
         folders[folder_count] = new_folder;
         // 当前文件夹新增一项
-        folders[folder_id].Add(folder_name, base_file_count);
+        folders[base_file_list.GetIndex(folder_id)].Add(folder_name, base_file_count);
 
         // 更新记数
         base_file_count++;
@@ -436,7 +437,7 @@ public:
             return -1;
 
         string file_name;
-        int folder_id = now_folder;
+        int folder_id = now_folder_base_id;
 
         // 确定文件夹位置
 
@@ -454,7 +455,7 @@ public:
                 file_name = file_path.substr(delimiter_pos + 1);
             }
             else {
-                folder_id = base_file_list.GetIndex(Find(upper_folder_path));
+                folder_id = Find(upper_folder_path);
                 file_name = file_path.substr(delimiter_pos + 1);
             }
         }
@@ -462,7 +463,7 @@ public:
         // 基本文件目录中新增一项
         base_file_list.Add(base_file_count, inode_id, false, file_name);
         // 对应的文件夹新增一项
-        folders[folder_id].Add(file_name, base_file_count);
+        folders[base_file_list.GetIndex(folder_id)].Add(file_name, base_file_count);
 
         // 更新记数
         base_file_count++;
@@ -580,11 +581,17 @@ public:
         // 查找路径上的父文件夹
         else
             ori_folder_id = Find(origin_path.substr(0, delimiter_pos));
-
         // 源父文件夹移出
-        folders[ori_folder_id].Delete(ori_id);
+        folders[base_file_list.GetIndex(ori_folder_id)].Delete(ori_id);
         // 目标文件夹新增
-        folders[dest_id].Add(base_file_list.GetName(ori_id), ori_id);
+        folders[base_file_list.GetIndex(dest_id)].Add(base_file_list.GetName(ori_id), ori_id);
+        // 如果移动的是文件夹，则需要更新..目录
+        if(base_file_list.GetIsFolder(ori_id)) {
+            vector<FolderItem>& items = folders[base_file_list.GetIndex(ori_id)].items;
+            for(int i = 0; i < items.size(); i++)
+                if(items[i].name == "..")
+                    items[i].index = dest_id;
+        }
     }
     /**
      * @brief 递归删除指定文件夹下所有的空文件夹(只包含文件夹的文件夹)，包括当前文件夹，不删除根目录
