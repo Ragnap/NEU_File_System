@@ -2,7 +2,7 @@
  * @ 青空だけが見たいのは我儘ですか
  * @Author       : RagnaLP
  * @Date         : 2023-05-23 15:00:16
- * @LastEditTime : 2023-06-01 10:25:43
+ * @LastEditTime : 2023-06-01 14:31:45
  * @Description  : 文件系统类
  */
 
@@ -236,6 +236,18 @@ public:
         menu_manager.DeleteEmptyFolder(file_path);
         return 0;
     }
+
+    /**
+     * @brief 重命名文件(夹)
+     *
+     * @param path 文件路径
+     * @param new_name 新名称
+     * @return int 0:正常修改 -1:文件不存在 -2:路径错误
+     */
+    int RenameFiles(string file_path, string new_name) {
+        return menu_manager.RenameFile(file_path, new_name);
+    }
+
     /**
      * @brief 跳转到新的目录
      *

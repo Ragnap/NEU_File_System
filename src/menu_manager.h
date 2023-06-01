@@ -2,7 +2,7 @@
  * @ 青空だけが見たいのは我儘ですか
  * @Author       : RagnaLP
  * @Date         : 2023-05-23 15:05:59
- * @LastEditTime : 2023-05-31 18:58:26
+ * @LastEditTime : 2023-06-01 14:52:31
  * @Description  : 目录处理相关类
  */
 
@@ -516,6 +516,41 @@ public:
         return 0;
     }
 
+    /**
+     * @brief 重命名文件(夹)
+     *
+     * @param path 文件路径
+     * @param new_name 新名称
+     * @return int 0:正常修改 -1:文件不存在 -2:路径错误
+     */
+    int RenameFile(string path, string new_name) {
+        // 定位文件夹
+        int id = Find(path);
+        if(id < 0)
+            return id;
+        // 定位父文件夹
+        int folder_id, delimiter_pos = path.find_last_of('/');
+        // 就是个纯文件，不包含路径
+        if(delimiter_pos == -1) {
+            folder_id = folders[base_file_list.GetIndex(now_folder_base_id)].Find("..");
+            // 根目录没有父文件夹
+            folder_id = (folder_id == -1) ? 0 : folder_id;
+        }
+        // 查找路径上的父文件夹
+        else
+            folder_id = Find(path.substr(0, delimiter_pos));
+
+        // 修改文件夹中的名称
+        for(int i = 0; i < folders[folder_id].items.size(); i++) {
+            if(folders[folder_id].items[i].index == id) {
+                folders[folder_id].items[i].name = new_name;
+                break;
+            }
+        }
+        // 修改基本文件表中的名称
+        base_file_list.items[id].name = new_name;
+        return 0;
+    }
     /**
      * @brief 递归删除指定文件夹下所有的空文件夹(只包含文件夹的文件夹)，包括当前文件夹，不删除根目录
      *

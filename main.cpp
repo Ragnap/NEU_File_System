@@ -2,7 +2,7 @@
  * @ 青空だけが見たいのは我儘ですか
  * @Author       : RagnaLP
  * @Date         : 2023-05-23 15:17:14
- * @LastEditTime : 2023-05-31 21:09:04
+ * @LastEditTime : 2023-06-01 14:58:38
  * @Description  :
  */
 
@@ -231,6 +231,23 @@ int main() {
                 else
                     PrintInfo("删除成功");
             }
+            else if(ope == "rename") {
+                int input_check = ReadString(2, arg, CheckCharOneByte);
+                if(input_check != 0) {
+                    if(input_check == -1)
+                        PrintError("输入参数不足");
+                    else if(input_check == -2)
+                        PrintError("参数非法");
+                    continue;
+                }
+                int result = file_system.RenameFiles(arg[0], arg[1]);
+                if(result == -1)
+                    PrintError("文件不存在");
+                else if(result == -2)
+                    PrintError("路径错误");
+                else
+                    PrintInfo("重命名成功");
+            }
             else if(ope == "signup") {
                 int input_check = ReadString(2, arg, CheckCharOneByte);
                 if(input_check != 0) {
@@ -246,14 +263,26 @@ int main() {
                 else
                     PrintInfo("注册成功");
             }
-            else if(ope == "save") {
+            else if(ope == "save")
                 file_system.Save();
-            }
-            else if(ope == "load") {
+            else if(ope == "load")
                 file_system.Load();
-            }
             else if(ope == "debug")
                 file_system.Debug();
+            else if(ope == "init") {
+                cout << "请重新设置root用户密码：";
+                while(1) {
+                    int input_check = ReadString(1, arg, CheckCharOneByte);
+                    if(input_check == -1)
+                        PrintError("输入参数不足");
+                    else if(input_check == -2)
+                        PrintError("参数非法");
+                    else
+                        break;
+                }
+                file_system.Initalize(arg[0]);
+                break;
+            }
             else if(ope == "logout") {
                 file_system.Save();
                 file_system.Load();
