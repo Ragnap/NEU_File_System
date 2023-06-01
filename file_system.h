@@ -2,7 +2,7 @@
  * @ 青空だけが見たいのは我儘ですか
  * @Author       : RagnaLP
  * @Date         : 2023-05-23 15:00:16
- * @LastEditTime : 2023-05-31 20:50:20
+ * @LastEditTime : 2023-06-01 10:25:43
  * @Description  : 文件系统类
  */
 
@@ -287,9 +287,9 @@ public:
         if(f == NULL)
             return false;
         // 保存到磁盘文件
-        WriteFile("/~menu", menu_manager.Save());
-        WriteFile("/~user", user_manager.Save());
-        WriteFile("/~inode", memory_manager.Save());
+        WriteFile("/~menu", menu_manager.Save(), "SYSTEM");
+        WriteFile("/~user", user_manager.Save(), "SYSTEM");
+        WriteFile("/~inode", memory_manager.Save(), "SYSTEM");
         block_manager.Save(f);
         fclose(f);
         // 保存为人眼可看的肉眼文件

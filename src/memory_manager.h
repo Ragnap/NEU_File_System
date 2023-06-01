@@ -2,7 +2,7 @@
  * @ 青空だけが見たいのは我儘ですか
  * @Author       : RagnaLP
  * @Date         : 2023-05-31 14:41:28
- * @LastEditTime : 2023-05-31 21:04:18
+ * @LastEditTime : 2023-06-01 10:26:34
  * @Description  : 内存管理与Inode系统
  */
 #include "config.h"
@@ -195,7 +195,7 @@ public:
         if(IsOpened(disc_inode_id))
             return -1;
         // 判断内存是否够大
-        if(disc_inode.file_size - disc_inodes[disc_inode_id].file_size > free_mem_block.size() * MEM_BLOCK_SIZE)
+        if(content.length() > free_mem_block.size() * MEM_BLOCK_SIZE)
             return -2;
         // 检测内存inode数量是否足够
         if(free_mem_inode.empty())
@@ -245,7 +245,7 @@ public:
     int WriteFile(int disc_inode_id, string user, string content) {
         if(!IsOpened(disc_inode_id))
             return -1;
-        if(disc_inodes[disc_inode_id].creator != "SYSTEM" && disc_inodes[disc_inode_id].creator != user)
+        if(disc_inodes[disc_inode_id].creator != user)
             return -2;
         // 判断内存是否够大
         if(content.length() - disc_inodes[disc_inode_id].file_size > free_mem_block.size() * MEM_BLOCK_SIZE)
@@ -288,7 +288,7 @@ public:
         if(IsOpened(disc_inode_id))
             CloseFile(disc_inode_id);
         // 权限检查
-        if(disc_inodes[disc_inode_id].creator != "SYSTEM" && disc_inodes[disc_inode_id].creator != user)
+        if(disc_inodes[disc_inode_id].creator != user)
             return 0;
         // 释放硬盘inode
         disc_inodes.erase(disc_inode_id);
