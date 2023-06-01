@@ -2,15 +2,27 @@
  * @ 青空だけが見たいのは我儘ですか
  * @Author       : RagnaLP
  * @Date         : 2023-05-23 15:17:14
- * @LastEditTime : 2023-06-01 15:34:52
+ * @LastEditTime : 2023-06-01 23:13:28
  * @Description  :
  */
 
 #include "file_system.h"
 #include "lib/custom_io_lib.h"
+#include "lib/trie_lib.h"
 #undef CreateFile
 FileSystem file_system;
+
+Trie BuildCommandCorrector() {
+    Trie trie;
+    string comands[19] = {"ls", "cd", "mkdir", "create", "open", "close", "read", "write", "delete", "rename", "move", "signup", "save", "load", "debug", "init", "logout", "exit", "help"};
+    for(int i = 0; i < 19; i++)
+        trie.insert(comands[i]);
+    return trie;
+}
+
 int main() {
+    // 指令预测器
+    Trie command_corrector = BuildCommandCorrector();
     // 指令
     string ope = "";
     // 操作数
@@ -350,7 +362,10 @@ int main() {
                 cout << endl;
             }
             else {
-                PrintError("指令错误!");
+                PrintError("指令错误!", 1);
+                string predict = command_corrector.predict(ope);
+                if(!predict.empty())
+                    PrintWarn("你是否在找: " + predict + " ?");
                 ClearFollowInput();
             }
         }
